@@ -117,9 +117,9 @@ function MediaGridItem({
         )}
         {/* View / Download overlay — images only; videos open in Drive on click */}
         {!isVideo && (
-          <div className="absolute inset-x-0 bottom-0 flex items-center justify-center
-            gap-2 px-2 py-2 bg-gradient-to-t from-black/60 to-transparent
-            opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute  inset-x-0 bottom-0 flex items-center justify-center
+            gap-2 px-2 py-2 bg-gradient-to-t from-black/60 to-transparent 
+            md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             <button
               onClick={(e) => { e.stopPropagation(); onLightbox() }}
               className="text-white text-[11px] font-medium px-2.5 py-1 rounded-lg
@@ -132,7 +132,7 @@ function MediaGridItem({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="text-white text-[11px] font-medium px-2.5 py-1 rounded-lg
+              className="hidden md:block text-white text-[11px] font-medium px-2.5 py-1 rounded-lg
                 bg-white/20 hover:bg-white/35 backdrop-blur-sm transition-colors"
             >
               Download
@@ -144,8 +144,8 @@ function MediaGridItem({
       <button
         onClick={(e) => { e.stopPropagation(); onSelect() }}
         title="Comments"
-        className={`absolute -top-2 px-2 right-5  h-5 text-[10px] rounded-full
-          flex items-center justify-center font-bold shadow-sm
+        className={`flex absolute -top-2 px-2 right-5  h-5 text-[10px] rounded-full
+           items-center justify-center font-bold shadow-sm
           ${count > 0 ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-500'}`}
       >
         Comments {count}
