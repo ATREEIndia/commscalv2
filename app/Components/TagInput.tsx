@@ -104,6 +104,7 @@ export default function TagInput({
         {!atMax && (
           <input disabled={disabeled}
             ref={inputRef}
+            enterKeyHint="enter"
             type="text"
             value={input}
             onChange={(e) => { setInput(e.target.value); setShowSuggestions(true) }}

@@ -55,14 +55,14 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
     const [message, setMessage] = useState<string>('Select a file to start the upload.');
     const [loading, setLoading] = useState<boolean>(false);
     const [uploadlabel, setuploadlabel] = useState("Select a file");
-    const[uplaodStatus, setUploadStataus]=useState(true)
+    const [uplaodStatus, setUploadStataus] = useState(true)
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (loading) {
             setMessage('upload in progress')
             return;
         }
-        
+
 
         const selecetedFile = e.target.files?.[0]
 
@@ -91,7 +91,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
 
             if (!response.ok) {
                 const errordata = await response.json()
-                 setUploadStataus(false)
+                setUploadStataus(false)
                 throw new Error(errordata.error || "upload failed on server");
             }
 
@@ -106,15 +106,15 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
 
         } catch (error) {
             console.log("upload error: " + error)
-             setUploadStataus(false)
+            setUploadStataus(false)
 
         } finally {
             setLoading(false)
             setuploadlabel("Select a file")
-             setUploadStataus(true)
+            setUploadStataus(true)
 
 
-           
+
 
         }
 
@@ -459,7 +459,39 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Mentions</label>
                     <span className='text-xs font-medium text-gray-600 px-2'>Use comma(,) or Enter key to add</span>
-                    <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='mentions' onKeyDown={(e) => {
+
+                    <form onSubmit={(e) => {
+                        e.preventDefault();
+                        const input = e.currentTarget.elements.namedItem('mentionInput') as HTMLInputElement;
+                        const value = input.value.trim();
+                        if (value !== "" && !mentions.includes(value)) {
+                            setMentions([...mentions, value]);
+                        }
+                        input.value = "";
+                    }}>
+                        <input
+                            name='mentionInput'
+                            className='p-2 border-2 w-full  border-gray-100 rounded-xl shadow text-sm'
+                            type='text'
+                            list='mentions'
+                            enterKeyHint='enter'
+                            onKeyDown={(e) => {
+                                if (e.key === ',' && e.currentTarget.value.trim() !== "") {
+                                    e.preventDefault();
+                                    const value = e.currentTarget.value.trim();
+                                    if (!mentions.includes(value)) {
+                                        setMentions([...mentions, value]);
+                                    }
+                                    e.currentTarget.value = "";
+                                }
+                            }}
+                        />
+                    </form>
+
+
+
+
+                    {/* <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='mentions' onKeyDown={(e) => {
                         if ((e.key === 'Enter' || e.key === ',' )  && e.currentTarget.value.trim() !== "") {
                             e.preventDefault();
                             if (!mentions.includes(e.currentTarget.value.trim())) {
@@ -472,7 +504,8 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                             }
                         }
                     }}  >
-                    </input>
+                    </input> */}
+
                     <datalist id='mentions'>
                         {mentionlist.map((item, index) => (
                             <option key={index} value={item}>{item}</option>
