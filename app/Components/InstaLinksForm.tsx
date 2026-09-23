@@ -4,6 +4,8 @@ import { db } from '../firebase/firebase'
 import { ref, push, set } from 'firebase/database'
 import { formatISTTimestamp } from '../../lib/time'
 
+
+
 type Props = {
     addedByEmail: string,
     onClose: () => void,
@@ -17,6 +19,7 @@ const InstaLinksForm = ({ addedByEmail, onClose, onSuccess }: Props) => {
     const [linkError, setLinkError] = useState("")
     const [submitError, setSubmitError] = useState("")
     const [submitting, setSubmitting] = useState(false)
+    const [titleTouched, setTitleTouched] = useState(false)
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -63,6 +66,41 @@ const InstaLinksForm = ({ addedByEmail, onClose, onSuccess }: Props) => {
             setSubmitting(false)
         }
     }
+
+   useEffect(() => {
+    if (titleTouched) return // user is typing their own title, don't override
+
+    let cancelled = false
+
+    try {
+        new URL(link)
+    } catch {
+        return // not a valid URL yet, don't fetch
+    }
+
+    const timeout = setTimeout(async () => {
+        setTitle("loading...")
+        try {
+            const res = await fetch(`/api/og-title?url=${encodeURIComponent(link)}`)
+            const data = await res.json()
+            if (!cancelled) setTitle(data.title ?? "")
+        } catch {
+            if (!cancelled) setTitle("")
+        }
+    }, 600) // debounce
+
+    return () => {
+        cancelled = true
+        clearTimeout(timeout)
+    }
+}, [link, titleTouched])
+
+
+
+    
+
+
+  
 
     return (
         <div className='w-full h-full absolute top-0 right-0 flex justify-center items-center z-50'>

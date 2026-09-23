@@ -532,7 +532,7 @@ export default function Home() {
       {isMobileNavOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setIsMobileNavOpen(false)} />
-          <div className="absolute left-0 top-0 h-full w-72 bg-white shadow-2xl z-10">
+          <div className="absolute left-0 top-0 h-full  bg-white shadow-2xl z-10">
             <Navbar current_page="Dashboard" />
           </div>
         </div>
@@ -600,9 +600,9 @@ export default function Home() {
                         {stat.icon}
                       </div>
                     </div>
-                    <div className="mt-3 w-full bg-gray-100 rounded-full h-1.5">
+                    <div className="mt-3 w-full overflow-hidden bg-gray-100 rounded-full h-1.5">
                       <div
-                        className={`h-1.5 rounded-full bg-gradient-to-r ${stat.gradient} transition-all duration-500`}
+                        className={`h-1.5  rounded-full bg-gradient-to-r ${stat.gradient} transition-all duration-500`}
                         style={{ width: totalTasks ? `${(stat.value / totalTasks) * 100}%` : "0%" }}
                       />
                     </div>

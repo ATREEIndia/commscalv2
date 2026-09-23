@@ -217,7 +217,7 @@ const Navbar = ({ current_page }: navprobes) => {
               </span>
             )}
           </div>
-          <span className="hidden sm:block text-sm font-medium truncate">
+          <span className=" sm:block text-sm font-medium truncate">
             Notifications
           </span>
         </button>
@@ -345,7 +345,7 @@ const Navbar = ({ current_page }: navprobes) => {
             </div>
 
             {/* Label */}
-            <span className="hidden sm:block text-sm font-medium truncate">
+            <span className=" md:block text-sm font-medium truncate">
               {item.name}
             </span>
 

@@ -18,6 +18,8 @@ import Viewdata from '../Components/Viewdata';
 
 
 const Page = () => {
+    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
     const { users, loading } = useUsers();
     const [useremail, setUseremail] = useState<string | null>("null");
     const [iseditformopen, setIseditformopen] = useState(false);
@@ -130,11 +132,34 @@ const Page = () => {
     return (
         <main className=" flex sm:gap-4 h-full w-full ">
             {/* left navigations */}
+            <div className='hidden md:flex'>
+                 <Navbar current_page="My Tasks" />
+            </div>
+           
+
+             {isMobileNavOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setIsMobileNavOpen(false)} />
+          <div className="absolute left-0 top-0 h-full w-70 bg-white shadow-2xl z-10">
             <Navbar current_page="My Tasks" />
+          </div>
+        </div>
+      )}
 
             {/* main content */}
             <div className="flex sm:flex-2 flex-col  w-full overflow-hidden relative">
-                <h1 className='font-bold text-xl p-8'>My Tasks</h1>
+                <div className='flex'>
+                    <button
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              onClick={() => setIsMobileNavOpen(true)}
+            >
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+                    <h1 className='font-bold text-xl p-8'>My Tasks</h1>
+                </div>
+                
 
                 {/* task categories */}
                 <div className='w-full flex gap-4 justify-center mt-4'>

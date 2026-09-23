@@ -20,6 +20,7 @@ const Page = () => {
     const [entries, setEntries] = useState<itemprobes[]>([])
     const [currrentMonthEntries, setCurrentMonthEntries] = useState<itemprobes[]>([]);
     const [reg_users, setReg_users] = useState<any[]>([]);
+    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
 
 
@@ -30,7 +31,7 @@ const Page = () => {
 
     const [sortcreatedon, setsortcreatedon] = useState(false);
 
-    const{isRegUser, user}=UserMyAppContext()
+    const { isRegUser, user } = UserMyAppContext()
 
     useEffect(() => {
         listenToItems(setEntries)
@@ -59,7 +60,7 @@ const Page = () => {
 
 
     const [username, setUsername] = useState<string | null>("null");
-    
+
     useEffect(() => {
 
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -414,18 +415,47 @@ const Page = () => {
     return (
         <main className=" flex sm:gap-4 h-full w-full overflow-hidden">
             {/* left navigations */}
-            <Navbar current_page="Database" />
+            <div className="hidden lg:block flex-shrink-0">
+                <Navbar current_page="Database" />
+            </div>
+
+            {/* ── Mobile Nav Overlay ── */}
+            {isMobileNavOpen && (
+                <div className="fixed  inset-0 z-50 lg:hidden">
+                    <div className="absolute inset-0 bg-black/40" onClick={() => setIsMobileNavOpen(false)} />
+                    <div className="absolute left-0 top-0 h-full w-70  bg-white shadow-2xl z-10">
+                        <Navbar current_page="Database" />
+                    </div>
+                </div>
+            )}
 
             {/* calendar content */}
-            <div className="flex sm:flex-2 sm:w-[70%] w-full p-2  flex-col relative" >
+            <div className="flex sm:flex-2 sm:w-[70%] w-full md:p-2 -center  flex-col relative p-2 px-4" >
                 {/* add new button */}
-                <div className='w-full mt-4 z-10 absolute top-0 right-0 align-middle  flex flex-col sm:flex-row items-center justify-center gap-0  '>
-                    <div className='sm:w-[80%] text-center flex items-center justify-center gap-8   '>
-                        <FaArrowLeft size={15} onClick={prev_month} className='cursor-pointer' />
-                        <div className='font-bold text-lg capitalize'>{currentMonth} </div>
-                        < FaArrowRight size={15} onClick={next_month} className='cursor-pointer' />
+                <div className='w-full  mt-4 z-10 absolute top-0 right-0 align-middle  flex  flex-col md:flex-row items-center justify-center gap-0  '>
+                    
+                    <div className='flex w-full px-4  '>
+                        <button
+                            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                            onClick={() => setIsMobileNavOpen(true)}
+                        >
+                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+
+                        <div className='w-full flex justify-center '>
+                            <div className='sm:w-[80%] text-center flex items-center justify-center gap-8   '>
+                                <FaArrowLeft size={15} onClick={prev_month} className='cursor-pointer' />
+                                <div className='font-bold text-lg capitalize'>{currentMonth} </div>
+                                < FaArrowRight size={15} onClick={next_month} className='cursor-pointer' />
+                            </div>
+                        </div>
+
+
                     </div>
-                    <div className=' flex justify-end flex-row mt-2 sm:mt-0'>
+
+                    <div className=' flex w-40  justify-center md:justify-end flex-row mt-2 sm:mt-0 '>
                         <div className='text-sm px-4 py-2 rounded-xl bg-blue-300 shadow-xl hover:bg-blue-400 cursor-pointer  ' onClick={changeformvisibility}>+ Add New</div>
                     </div>
 
@@ -443,8 +473,8 @@ const Page = () => {
                         <h1 className='text-sm text-center align-middle font-semibold justify-center w-[15%]'>Category</h1>
                         <h2 className='w-[20%] text-center overflow-clip text-sm font-semibold'>Title</h2>
                         <p className='w-[20%]   overflow-clip text-sm text-center font-semibold'>mention</p>
-                        <p className={`w-[5%]  overflow-clip text-sm text-center font-semibold ${isRegUser?"flex":"hidden"}`}>WTW Status</p>
-                        <p className={`w-[15%]   overflow-clip text-sm text-center font-semibold ${isRegUser?"":"hidden"}`}>SM Status</p>
+                        <p className={`w-[5%]  overflow-clip text-sm text-center font-semibold ${isRegUser ? "flex" : "hidden"}`}>WTW Status</p>
+                        <p className={`w-[15%]   overflow-clip text-sm text-center font-semibold ${isRegUser ? "" : "hidden"}`}>SM Status</p>
                     </div>
                     {currrentMonthEntries.map((entry, index) => (
                         <div key={index}>
@@ -482,7 +512,7 @@ const Page = () => {
 
 
 
-                                <div className={`flex justify-center items-center gap-5  ${isRegUser?"flex":"hidden"}`}>
+                                <div className={`flex justify-center items-center gap-5  ${isRegUser ? "flex" : "hidden"}`}>
 
                                     <label className="custom-checkbox mt-1">
                                         <input className={``}
@@ -513,7 +543,7 @@ const Page = () => {
 
 
 
-                                <p className={`w-[15%]  overflow-clip text-sm text-center ${isRegUser?"":"hidden"}`}>
+                                <p className={`w-[15%]  overflow-clip text-sm text-center ${isRegUser ? "" : "hidden"}`}>
                                     <select className='bg-transparent focus:ring-0 focus:outline-0' value={entry.sm_status} onChange={(e) => updatedsmstatus(entry.title, e.target.value, entry.date, entry.id ? entry.id : '00')}>
                                         <option value="">Select</option>
                                         <option value="Working">Working</option>
@@ -575,7 +605,7 @@ const Page = () => {
 
 
                 <div className='absolute top-0 right-0 z-15  h-full w-full flex justify-center items-center' style={{ display: iseditformopen ? 'flex' : 'none' }}>
-                    <Editform changeformvisibility={manageeditform} selectedEntry={selectedEntry} showToast={showToast} user={username || 'user not found'} userEmail={user?.email ||""} items={entries} />
+                    <Editform changeformvisibility={manageeditform} selectedEntry={selectedEntry} showToast={showToast} user={username || 'user not found'} userEmail={user?.email || ""} items={entries} />
 
                 </div>
 

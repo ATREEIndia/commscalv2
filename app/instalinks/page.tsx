@@ -83,6 +83,8 @@ const Page = () => {
     const [useremail, setUseremail] = useState<string | null>(null);
     const [isAdmin, setIsAdmin] = useState(false);
 
+    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
     const [links, setLinks] = useState<InstaLinkEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState(false);
@@ -177,14 +179,37 @@ const Page = () => {
     }
 
     return (
-        <main className=" flex gap-4 h-full w-full relative ">
+        <main className=" flex gap-4 h-full w-full relative p-2 ">
             {/* left navigations */}
-            <Navbar current_page="InstaLinks" />
+            {/* <Navbar current_page="InstaLinks" /> */}
+
+             <div className="hidden lg:block flex-shrink-0">
+                <Navbar current_page="InstaLinks" />
+            </div>
+
+            {/* ── Mobile Nav Overlay ── */}
+            {isMobileNavOpen && (
+                <div className="fixed  inset-0 z-50 lg:hidden">
+                    <div className="absolute inset-0 bg-black/40" onClick={() => setIsMobileNavOpen(false)} />
+                    <div className="absolute left-0 top-0 h-full w-70  bg-white shadow-2xl z-10">
+                        <Navbar current_page="InstaLinks" />
+                    </div>
+                </div>
+            )}
+
 
             {/* InstaLinks content */}
             <div className="flex flex-2  ">
                 <div className='w-full h-full flex flex-col mt-10 px-4 sm:px-10 max-h-screen overflow-y-scroll'>
-                    <div className='w-full flex items-center justify-between mb-5'>
+                    <div className='w-full flex items-center gap-5 mb-5'>
+                           <button
+                            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                            onClick={() => setIsMobileNavOpen(true)}
+                        >
+                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
                         <h1 className='text-lg font-bold text-gray-500'>InstaLinks</h1>
                     </div>
 

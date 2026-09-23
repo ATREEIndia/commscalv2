@@ -720,6 +720,7 @@ const Page = () => {
     const [authorKeywords, setAuthorKeywords] = useState<string[]>([])
     const [showSuggestions, setShowSuggestions] = useState(false)
     const [highlightedIndex, setHighlightedIndex] = useState(0)
+    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
     // autosuggest source: named authors from mentionlist, filtered by what's typed
     // and excluding names already added as chips
@@ -864,11 +865,35 @@ const Page = () => {
     }
 
     return (
-        <main className='flex w-full max-h-screen bg-gray-50 overflow-y-scroll'>
-            <Navbar current_page="My Data" />
+        <main className='flex w-full max-h-screen bg-gray-50 overflow-y-scroll '>
+            {/* <Navbar current_page="My Data" /> */}
+             <div className="hidden lg:block flex-shrink-0">
+                <Navbar current_page="My Data" />
+            </div>
 
-            <div className='flex-1 min-w-0 p-4 sm:p-6 flex flex-col gap-4'>
-                <h1 className='text-xl font-semibold text-gray-800'>My Data</h1>
+            {/* ── Mobile Nav Overlay ── */}
+            {isMobileNavOpen && (
+                <div className="fixed  inset-0 z-50 lg:hidden">
+                    <div className="absolute inset-0 bg-black/40" onClick={() => setIsMobileNavOpen(false)} />
+                    <div className="absolute left-0 top-0 h-full w-70  bg-white shadow-2xl z-10">
+                        <Navbar current_page="My Data" />
+                    </div>
+                </div>
+            )}
+
+            <div className='flex-1 min-w-0 p-4 sm:p-6 flex flex-col gap-4 '>
+                <div className='flex gap-2 '>
+                       <button
+                            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                            onClick={() => setIsMobileNavOpen(true)}
+                        >
+                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                        <h1 className='text-xl font-semibold text-gray-800 align-bottom'>My Data</h1>
+                </div>
+                
 
                 {/* ------------------- filter bar ------------------- */}
                 <div className='flex flex-col sm:flex-row sm:items-center gap-3 bg-white rounded-xl p-4 shadow-sm border border-gray-100'>
@@ -1076,7 +1101,7 @@ const Page = () => {
 
                 {/* ------------------- pagination controls ------------------- */}
                 {totalPages > 1 && (
-                    <div className='flex flex-wrap items-center justify-center gap-2 pb-4'>
+                    <div className='flex flex-wrap items-center justify-center gap-2 pb-10 md:pb-4'>
                         <button
                             type="button"
                             onClick={() => goToPage(currentPage - 1)}
