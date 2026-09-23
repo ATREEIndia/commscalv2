@@ -999,14 +999,14 @@ export default function PostDetail({ postId, user, onClose }: Props) {
 
         {/* ── Body + Comment thread ── */}
         <section>
-          <h2 className="text-base font-bold text-gray-800 mb-3">Body Copy</h2>
+          <h2 className="text-base font-bold text-gray-800 mb-3 ">Body Copy</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Editable body */}
             <div>
               {editingBody ? (
                 <div>
                   <textarea
-                    className="w-full border border-blue-300 rounded-2xl px-4 py-3 text-sm
+                    className="w-full border border-blue-300 rounded-2xl px-4 py-3 text-sm  
                       focus:outline-none focus:ring-2 focus:ring-blue-300 resize-y min-h-[180px]"
                     value={bodyDraft}
                     onChange={(e) => setBodyDraft(e.target.value)}
@@ -1036,7 +1036,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                     onClick={startEditBody}
                     className="min-h-[180px] border border-gray-200 rounded-2xl px-4 py-3
                       text-sm text-gray-700 cursor-pointer hover:border-blue-300
-                      hover:bg-gray-50/50 transition-all whitespace-pre-wrap"
+                      hover:bg-gray-50/50 transition-all break-all whitespace-pre-wrap"
                   >
                     {post.bodyCopy || (
                       <span className="text-gray-300">Click to add body copy…</span>
