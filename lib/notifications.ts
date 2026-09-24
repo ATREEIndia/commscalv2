@@ -57,7 +57,7 @@ export async function notify({ recipients, actor, type, postId, postTitle, messa
           : recipients,
         user: actor?.email,
         subject: `${type} ${postTitle}`,
-        message,
+        message:message+`\n\nhttps://commscal.atree.org/smcal/${postId} `,
       }),
     }
   );
