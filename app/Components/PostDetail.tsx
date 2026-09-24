@@ -29,6 +29,8 @@ import { notify } from '../../lib/notifications'
 import { emailToColor, getInitial } from '../../lib/assignColor'
 import { format } from 'date-fns'
 import { equalTo, get, orderByChild, query as rdbQuerry, ref, update } from 'firebase/database'
+import { useRouter } from 'next/navigation'
+
 
 // ── Status config ──────────────────────────────────────────────────────────────
 const STATUS_CFG = {
@@ -70,6 +72,7 @@ function MediaGridItem({
   index: number
 }) {
   const isVideo = useMediaType(url) === 'video'
+  
 
   return (
     <div className="relative group">
@@ -258,6 +261,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
 
   //   setShowMailDraft(false);
   // };
+   const router = useRouter()
 
   const handleSend = async () => {
     setSaving(true);
@@ -361,7 +365,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
       <div className="fixed inset-0 z-50 bg-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-500 text-sm mb-3">Post not found.</p>
-          <button onClick={onClose} className="text-sm text-blue-500 hover:underline">← Back</button>
+          <button onClick={()=> router.push('/')} className="text-sm text-blue-500 hover:underline">← Back</button>
         </div>
       </div>
     )
@@ -726,6 +730,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   const startEditDocUrl = () => { setDocUrlDraft(post.docUrl || ''); setEditingDocUrl(true) }
 
   // ─────────────────────────────────────────────────────────────────────────────
+  
   return (
     <div className="fixed inset-0 z-50 bg-white overflow-auto">
 
@@ -734,13 +739,14 @@ export default function PostDetail({ postId, user, onClose }: Props) {
         <div className="max-w-5xl mx-auto flex items-center gap-4"> */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 sm:px-6 py-3">
   <div className="max-w-5xl mx-auto flex flex-wrap items-center gap-2 sm:gap-4">
-          {isReguser &&
+          
             <button
-              onClick={onClose}
+              onClick={() => !isReguser ? router.push('/') : onClose()}
               className="text-sm text-gray-500 hover:text-gray-800 transition-colors flex-shrink-0"
             >
               ← Back
-            </button>}
+            </button>
+            
 
           {/* Title (editable) */}
           <div className="flex items-center gap-2 flex-1 min-w-0 justify-center">
