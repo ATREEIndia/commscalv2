@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { Mail, X } from "lucide-react";
 import {
   addDoc,
   collection,
@@ -168,6 +169,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   const [comments, setComments] = useState<SMComment[]>([])
   const [history, setHistory] = useState<HistoryEvent[]>([])
   const [loading, setLoading] = useState(true)
+  const [mailSend, setMailSend] = useState(false)
 
   // Edit states
   const [editingTitle, setEditingTitle] = useState(false)
@@ -208,6 +210,94 @@ export default function PostDetail({ postId, user, onClose }: Props) {
       setTimeout(() => setCopied(false), 2000)
     })
   }
+  //mail
+  const [showMailDraft, setShowMailDraft] = useState(false);
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [cc, SetCC] = useState('')
+
+  // const handleSend = async() => {
+
+
+  //   const body = encodeURIComponent(message);
+  //   const to = encodeURIComponent(email);
+  //   const cc_to = encodeURIComponent(cc); 
+
+
+
+  //   setSaving(true);
+
+
+  // try {
+  //   const res = await fetch(
+  //     "https://script.google.com/macros/s/AKfycbygVonucPeZr5LI8iHDcFYZ9W-FKVMnqIMfGTB_5qalaTlFGfCR9airlXbH7Swttp-fBQ/exec",
+  //     {
+  //       method: "POST",
+  //       headers: { "Content-Type": "text/plain" }, // avoids CORS preflight on Apps Script
+  //       body: JSON.stringify({
+  //         to: email,
+  //         cc,
+  //         subject: ` SM Post Approval Request: ${post?.title}`,
+  //         message,
+  //       }),
+  //     }
+  //   );
+  //   const result = await res.json();
+  //   if (!result.success) throw new Error(result.error);
+  //   setShowMailDraft(false);
+  // } catch (err) {
+  //   console.error(err);
+  //   alert("Failed to send email. Please try again.");
+  // } finally {
+  //   setSaving(false);
+  // }
+
+
+
+
+
+  //   setShowMailDraft(false);
+  // };
+
+  const handleSend = async () => {
+    setSaving(true);
+    try {
+      const url = process.env.NEXT_PUBLIC_MAIL_SCRIPT;
+
+      if (!url) {
+        throw new Error('NEXT_PUBLIC_MAIL_SCRIPT env var is not set');
+      }
+      const res = await fetch(
+        url,
+        {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({
+            to: email.trim(),
+            user: user?.email,
+            cc: cc.trim(),
+            subject: `SM Approval Request: ${post?.title}`,
+            message,
+          }),
+        }
+      );
+      const result = await res.json();
+      if (!result.success) throw new Error(result.error);
+
+      // Log to history
+      await log('mail_sent', undefined, `To: ${email.trim()}${cc.trim() ? `, Cc: ${cc.trim()}` : ''}`)
+
+      // Optional: notify the recipient list too, same pattern as your other actions
+      await notifyOwners('post_edited', `${actor.name} sent an approval email for "${post?.title}"`)
+
+      setShowMailDraft(false);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send email. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // ── Firestore listeners ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -231,15 +321,32 @@ export default function PostDetail({ postId, user, onClose }: Props) {
       collection(firestore, 'posts', postId, 'history'),
       orderBy('timestamp', 'desc')
     )
-    const unsub = onSnapshot(q, (snap) =>
-      setHistory(snap.docs.map((d) => ({ id: d.id, ...d.data() } as HistoryEvent)))
+    const unsub = onSnapshot(q, (snap) => {
+      const events = snap.docs.map((d) => ({ id: d.id, ...d.data() } as HistoryEvent))
+
+      setHistory(events)
+
+      setMailSend(events.some((h) => h.type === 'mail_sent'))
+    }
+
     )
+
+
     return () => unsub()
   }, [postId])
 
   useEffect(() => {
     setisRegUser(users.some((u) => u.email === user?.email));
   }, [users, user])
+
+  useEffect(() => {
+    if (!post) return
+    const url = `${window.location.origin}/smcal/${postId}`
+    const dateTime = formatIST(post.scheduledAt)
+    const text = `${post.title} — ${dateTime}\n${url}`
+    setMessage(`Hi \nThe Post is ready. Please find the schedule and review the post using the link. \n\n${text}`)
+
+  }, [showMailDraft])
 
   // ── Loading / not found ──────────────────────────────────────────────────────
   if (loading) {
@@ -259,6 +366,9 @@ export default function PostDetail({ postId, user, onClose }: Props) {
       </div>
     )
   }
+
+
+
 
 
 
@@ -544,11 +654,11 @@ export default function PostDetail({ postId, user, onClose }: Props) {
 
         await update(itemRef, {
           assigned_to: "",
-          sm_status:"No Post"
+          sm_status: "No Post"
 
         });
 
-       // console.log("sm_status updated");
+        // console.log("sm_status updated");
       } catch (error) {
         console.error(error);
       }
@@ -620,8 +730,10 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     <div className="fixed inset-0 z-50 bg-white overflow-auto">
 
       {/* ── Sticky header ── */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3">
-        <div className="max-w-5xl mx-auto flex items-center gap-4">
+      {/* <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3">
+        <div className="max-w-5xl mx-auto flex items-center gap-4"> */}
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 sm:px-6 py-3">
+  <div className="max-w-5xl mx-auto flex flex-wrap items-center gap-2 sm:gap-4">
           {isReguser &&
             <button
               onClick={onClose}
@@ -690,8 +802,184 @@ export default function PostDetail({ postId, user, onClose }: Props) {
               bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-700
               transition-colors whitespace-nowrap"
           >
-            {copied ? '✓ Copied' : '🔗 Share'}
+            {copied ? '✓ Copied' : '🔗 link'}
           </button>
+
+
+
+          {/* send email */}
+
+          {/* {isReguser &&
+            <div className="flex flex-col relative w-full sm:w-auto">
+              <button
+                onClick={() => setShowMailDraft((prev) => !prev)}
+                title="Send Mail"
+                className={`flex-shrink-0 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border ${mailSend ? "border-green-200 bg-green-50 hover:bg-green-100" : " border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-700  "} transition-colors whitespace-nowrap w-fit`}
+              >
+                <Mail className={`w-3.5 h-3.5 ${mailSend ? 'bg-green-200' : ''}`} />
+                {mailSend ? 'Resend Email for Approval' : 'Mail for Approval'}
+
+              </button>
+
+              {showMailDraft && (
+                <div
+                  className="absolute left-0 right-0 sm:right-auto top-full mt-2 z-10
+            w-full sm:w-96 max-w-[calc(100vw-2rem)]
+            text-sm p-4 flex flex-col gap-2
+            bg-amber-50 border border-amber-200 rounded-lg shadow-lg"
+                >
+                  <div className="flex items-center justify-between">
+                    <h1 className="font-medium text-gray-800">Share mail for Approval</h1>
+                    <button
+                      onClick={() => setShowMailDraft(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                      title="Close"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    type="email"
+                    placeholder="Recipient email"
+                    className="w-full rounded-md border border-amber-200 px-2 py-1.5 text-sm
+              focus:outline-none focus:ring-2 focus:ring-amber-300 bg-white"
+                  />
+                  <div className='p-2 flex items-center gap-2 '>
+                    <p>cc:</p>
+                    <input
+                      value={cc}
+                      onChange={(e) => SetCC(e.target.value)}
+                      type="email"
+                      placeholder="optional"
+                      className="w-full rounded-md border border-amber-200 px-2 py-1.5 text-sm
+              focus:outline-none focus:ring-2 focus:ring-amber-300 bg-white"
+                    />
+
+
+                  </div>
+                  <p className='text-xs p-2 bg-amber-100'>communications@atree.org and you will be copied by default</p>
+
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Message"
+                    rows={4}
+                    className="w-full rounded-md border border-amber-200 px-2 py-1.5 text-sm resize-none
+              focus:outline-none focus:ring-2 focus:ring-amber-300 bg-white"
+                  />
+
+                  <button
+                    onClick={handleSend}
+                    className="self-end text-xs px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600
+              text-white transition-colors"
+                  >
+                    Send
+                  </button>
+                </div>
+              )}
+            </div>
+
+          } */}
+
+          {isReguser && (
+            <div className="flex flex-col relative w-full sm:w-auto">
+              <button
+                onClick={() => setShowMailDraft((prev) => !prev)}
+                title="Send Mail"
+                className={`flex-shrink-0 flex items-center gap-1.5 text-xs px-2.5 sm:px-3 py-1.5 rounded-lg border
+        ${mailSend
+                    ? "border-green-200 bg-green-50 hover:bg-green-100"
+                    : "border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-700"
+                  } transition-colors whitespace-nowrap w-fit max-w-full`}
+              >
+                <Mail className={`w-3.5 h-3.5 flex-shrink-0 ${mailSend ? 'text-green-600' : ''}`} />
+                <span className="truncate">
+                  <span className="hidden sm:inline">
+                    {mailSend ? 'Resend Email for Approval' : 'Mail for Approval'}
+                  </span>
+                  <span className="inline sm:hidden">
+                    {mailSend ? 'Resend' : 'Mail'}
+                  </span>
+                </span>
+              </button>
+
+              {showMailDraft && (
+                <div
+                  className="absolute left-0 right-0 sm:right-auto top-full mt-2 z-10
+          w-[calc(100vw-3rem)] sm:w-96 max-w-96
+          text-sm p-3 sm:p-4 flex flex-col gap-2
+          bg-amber-50 border border-amber-200 rounded-lg shadow-lg"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <h1 className="font-medium text-gray-800 text-sm sm:text-base">
+                      Share mail for Approval
+                    </h1>
+                    <button
+                      onClick={() => setShowMailDraft(false)}
+                      className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+                      title="Close"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    type="email"
+                    placeholder="Recipient email"
+                    className="w-full rounded-md border border-amber-200 px-2 py-1.5 text-sm
+            focus:outline-none focus:ring-2 focus:ring-amber-300 bg-white"
+                  />
+
+                  <div className="flex items-center gap-2">
+                    <p className="flex-shrink-0 text-xs sm:text-sm text-gray-600">cc:</p>
+                    <input
+                      value={cc}
+                      onChange={(e) => SetCC(e.target.value)}
+                      type="email"
+                      placeholder="optional"
+                      className="w-full min-w-0 rounded-md border border-amber-200 px-2 py-1.5 text-sm
+              focus:outline-none focus:ring-2 focus:ring-amber-300 bg-white"
+                    />
+                  </div>
+
+                  <p className="text-[11px] sm:text-xs p-2 bg-amber-100 rounded-md break-words">
+                    communications@atree.org and you will be copied by default
+                  </p>
+
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Message"
+                    rows={4}
+                    className="w-full rounded-md border border-amber-200 px-2 py-1.5 text-sm resize-none
+            focus:outline-none focus:ring-2 focus:ring-amber-300 bg-white"
+                  />
+
+                  <button
+                    onClick={handleSend}
+                    disabled={saving}
+                    className="self-end text-xs px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600
+            text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {saving ? 'Sending…' : 'Send'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+
+
+
+
+
+
+
         </div>
       </div>
 

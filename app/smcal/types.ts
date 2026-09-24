@@ -73,6 +73,8 @@ export type HistoryEventType =
   | 'comment_edited'
   | 'comment_unresolved'
   | 'assignment_changed'
+  |'mail_sent'
+
 
 export type HistoryEvent = {
   id?: string

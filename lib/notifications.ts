@@ -38,7 +38,40 @@ export async function notify({ recipients, actor, type, postId, postTitle, messa
       })
     )
   )
+
+  const url = process.env.NEXT_PUBLIC_MAIL_SCRIPT;
+
+  if (!url) {
+    throw new Error('NEXT_PUBLIC_MAIL_SCRIPT env var is not set');
+  }
+
+  const res = await fetch(
+
+    url,
+    {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({
+        to: Array.isArray(recipients)
+          ? [...new Set(recipients.filter(Boolean))].join(',')
+          : recipients,
+        user: actor?.email,
+        subject: `${type} ${postTitle}`,
+        message,
+      }),
+    }
+  );
+  const result = await res.json();
+  console.log(result)
+
+
+
+
+
+
 }
+
+
 
 const CLEANUP_KEY_PREFIX = 'notif_cleanup_'
 

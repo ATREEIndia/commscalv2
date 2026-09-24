@@ -44,6 +44,8 @@ function eventLabel(event: HistoryEvent): string {
       return 'Reopened a resolved comment thread'
     case 'assignment_changed':
       return 'Reassigned the post'
+    case 'mail_sent':
+      return 'Sent an approval email'
     default:
       return 'Made a change'
   }
@@ -101,6 +103,12 @@ export default function HistoryLog({ history }: Props) {
               </div>
             )}
 
+            {event.type === 'mail_sent' && event.after !== undefined && (
+              <div className="mt-1 text-xs text-gray-500">
+                {event.after}
+              </div>
+            )}
+
             {event.type === 'image_reordered' &&
               event.before !== undefined &&
               event.after !== undefined && (
@@ -108,7 +116,7 @@ export default function HistoryLog({ history }: Props) {
                   {(() => {
                     try {
                       const before: string[] = JSON.parse(event.before)
-                      const after:  string[] = JSON.parse(event.after)
+                      const after: string[] = JSON.parse(event.after)
                       return after.map((url, i) => {
                         const prev = before.indexOf(url)
                         const moved = prev !== i
@@ -137,7 +145,7 @@ export default function HistoryLog({ history }: Props) {
                   {(() => {
                     try {
                       const before: { email: string; name: string } = JSON.parse(event.before)
-                      const after:  { email: string; name: string } = JSON.parse(event.after)
+                      const after: { email: string; name: string } = JSON.parse(event.after)
                       return (
                         <>
                           <span className="line-through text-red-400" title={before.email}>
