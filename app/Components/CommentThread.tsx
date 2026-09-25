@@ -251,6 +251,7 @@ export default function CommentThread({
   // ── Delete comment ─────────────────────────────────────────────────────────
   const deleteComment = async (commentId: string) => {
     await deleteDoc(doc(firestore, 'posts', postId, 'comments', commentId))
+    
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────

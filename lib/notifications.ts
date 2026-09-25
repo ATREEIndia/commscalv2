@@ -56,7 +56,7 @@ export async function notify({ recipients, actor, type, postId, postTitle, messa
           ? [...new Set(recipients.filter(Boolean))].join(',')
           : recipients,
         user: actor?.email,
-        subject: `${type} ${postTitle}`,
+        subject: `${type}: ${postTitle}`,
         message:message+`\n\nhttps://commscal.atree.org/smcal/${postId} `,
       }),
     }

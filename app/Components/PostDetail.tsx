@@ -485,7 +485,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     }
 
     await log('schedule_changed', before, after)
-    await notifyOwners('post_edited', `${actor.name} rescheduled "${post.title}"`)
+    await notifyOwners('post_edited', `${actor.name} rescheduled "${post.title}" \n${before} ➜ ${after} `)
     setSaving(false); setEditingSchedule(false)
   }
 
