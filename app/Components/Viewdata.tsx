@@ -18,6 +18,8 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
     const { users, loading } = useUsers();
     const userlist = users.map(user => user.email);
 
+    
+
     const [username, setUsername] = useState<string | null>("null");
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -51,6 +53,9 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
     const [cnfkey, setcnfkey] = useState<string>("");
 
     const [iscnfwindowopen, setIscnfwindowopen] = useState(false);
+
+    const smPost=selectedEntry?.linkedSmPostId ;
+    const smPostUrl=`https://commscal.atree.org/smcal/${smPost}`;
 
 
 
@@ -153,7 +158,7 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
     }
 
     const updatetask = async (title: string, current_status: string, id: string) => {
-        console.log("assigned to 0= " + selectedEntry?.assigned_to?.length)
+        console.log("assigned to 0= " + selectedEntry?.linkedSmPostId)
         console.log("completed by 0= " + selectedEntry?.completed_by?.length);
 
         try {
@@ -465,6 +470,41 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
 
                 </div>
 
+                {smPost && (
+                    <div className="w-full border-t border-gray-100 pt-2 mt-2 mb-3
+                        flex flex-col sm:flex-row sm:items-center gap-2">
+
+                        {/* Icon + URL text */}
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="text-blue-500 text-sm flex-shrink-0">📱</span>
+                            <span className="text-xs font-medium text-gray-700 flex-shrink-0">SM Post:</span>
+                            <a
+                                href={smPostUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:text-blue-800 underline truncate"
+                                title={smPostUrl}
+                            >
+                                {smPostUrl}
+                            </a>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex gap-2 flex-shrink-0">
+                            <a
+                                href={smPostUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700
+                                    border border-blue-200 rounded-lg px-2.5 py-1 flex items-center gap-1"
+                            >
+                                🔗 View SM Post
+                            </a>
+                           
+                        </div>
+                    </div>
+                )}
+
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Assigned to</label>
                     {/* <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='assign' onKeyDown={(e) => {
@@ -588,7 +628,9 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
 
                     <div className='px-4 py-2 border-2 border-red-300 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { mark_as("Working") }}>Mark as Pending</div>
 
-                    <div className='px-4 py-2 border-2 border-green-300 shadow hover:bg-green-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { mark_as('Posted') }}>Mark as Completed</div>
+                    {/* <div className='px-4 py-2 border-2 border-green-300 shadow hover:bg-green-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { mark_as('Posted') }}>Mark as Completed</div> */}
+
+                    <a href={smPostUrl} target='_blank' className='px-4 py-2 border-2 border-green-300 shadow hover:bg-green-500 hover:text-white rounded-2xl cursor-pointer text-center' >Mark as Posted</a>
 
                     <div className='px-4 py-2 border-2 border-red-500 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { delete_task() }}>Delete Task</div>
                 </div>

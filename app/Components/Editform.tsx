@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { categorylist , buildTagSuggestions, delete_sheet_row_url, itemprobes, mentionlist, platformlist, sheetupdateurl, taskprobs, useUsers } from '../constants'
+import { categorylist, buildTagSuggestions, delete_sheet_row_url, itemprobes, mentionlist, platformlist, sheetupdateurl, taskprobs, useUsers } from '../constants'
 import { auth, db, firestore } from '../firebase/firebase';
 import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
 import { add, format } from 'date-fns';
@@ -11,8 +11,8 @@ import TagInput from './TagInput';
 
 type Props = {
 
-    user?:string,
-    userEmail?:string,
+    user?: string,
+    userEmail?: string,
 
     changeformvisibility: () => void | null,
     selectedEntry?: itemprobes | null
@@ -28,11 +28,11 @@ function formatTimestamp(ms: number): string {
     });
 }
 
-const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEmail="", items = [] }: Props) => {
+const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEmail = "", items = [] }: Props) => {
     const { users, loading } = useUsers();
     const userlist = users.map(user => user.email);
 
-    const{isRegUser, role}=UserMyAppContext()
+    const { isRegUser, role } = UserMyAppContext()
 
     const [username, setUsername] = useState<string | null>("null");
     useEffect(() => {
@@ -43,7 +43,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
         return () => unsubscribe();
     }, []);
 
-    const [entryid, Setentryid]=useState('')
+    const [entryid, Setentryid] = useState('')
 
     const [mentions, setMentions] = useState<string[]>([]);
 
@@ -75,20 +75,20 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
     const [date_error, setDate_error] = useState<boolean>(false);
     const [categorry_error, setCategory_error] = useState<boolean>(false);
     const [deadline_error, setDeadline_error] = useState<boolean>(false);
-     const [url_error, seturl_error]=useState<boolean>(false);
-        const [isshowcopy,setIsshowcopy]=useState<boolean>(false);
+    const [url_error, seturl_error] = useState<boolean>(false);
+    const [isshowcopy, setIsshowcopy] = useState<boolean>(false);
 
-        const [click, setClick]=useState<boolean>(false);
+    const [click, setClick] = useState<boolean>(false);
 
-        const [copyStatus, setCopyStatus] = useState('');
+    const [copyStatus, setCopyStatus] = useState('');
 
-        const smPostUrl = selectedEntry?.smPostId
-            ? `${process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')}/smcal/${selectedEntry.smPostId}`
-            : null;
+    const smPostUrl = selectedEntry?.smPostId
+        ? `${process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')}/smcal/${selectedEntry.smPostId}`
+        : null;
 
-        const [tags, setTags] = useState<string[]>(selectedEntry?.tags ?? []);
+    const [tags, setTags] = useState<string[]>(selectedEntry?.tags ?? []);
 
-        const tagSuggestions = useMemo(() => buildTagSuggestions(items), [items]);
+    const tagSuggestions = useMemo(() => buildTagSuggestions(items), [items]);
 
 
 
@@ -110,7 +110,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
 
 
 
-        console.log("sm== "+sm_status)
+        console.log("sm== " + sm_status)
         const updatePayload: Record<string, any> = {
             date: date,
             createdon: createdon,
@@ -125,7 +125,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
             img_url: img_url,
             mention: mention,
             remarks: remarks,
-            sm_status:sm_status,
+            sm_status: sm_status,
             tags: tags,
         };
 
@@ -140,8 +140,8 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
             .then(() => {
                 //console.log('Data added successfully!');
                 addToTask({ title, description, url, assigned_to: assign_to, createdon: new Date().toISOString().split('T')[0] })
-               // clearform();
-                
+                // clearform();
+
             })
             .catch((error) => {
                 console.error('Error adding data:', error);
@@ -170,17 +170,17 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
             alert("Deadline is not valid");
             return;
         }
-         if(url==""){
-                seturl_error(true);
-            }
-            else{
-                seturl_error(false);
-            }
+        if (url == "") {
+            seturl_error(true);
+        }
+        else {
+            seturl_error(false);
+        }
 
 
 
 
-        if (date == "" || title == "" || category == "" || (assign_to.length > 0 && Smdeadline == "") || url=="") {
+        if (date == "" || title == "" || category == "" || (assign_to.length > 0 && Smdeadline == "") || url == "") {
             alert("Please fill all the required fields");
             return;
         }
@@ -198,24 +198,24 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
             return;
         }
 
-          callsheetque(
+        callsheetque(
             "replace"
 
-         );
+        );
 
-       
 
-         
-            let customsm_status=sm_status;
 
-             if(sm_status.length<1 && assigned_toString.length>0){
-                    customsm_status='Working'
-                }
 
-             if(sm_status.length>1 && assigned_toString.length<1){
-                    customsm_status=''
-                }
-        
+        let customsm_status = sm_status;
+
+        if (sm_status.length < 1 && assigned_toString.length > 0) {
+            customsm_status = 'Working'
+        }
+
+        if (sm_status.length > 1 && assigned_toString.length < 1) {
+            customsm_status = ''
+        }
+
 
 
 
@@ -248,13 +248,13 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
 
     const addToTask = ({ title, description, url, assigned_to }: taskprobs) => {
 
-       
+
 
 
         try {
-            const uid=selectedEntry?.id ||""
+            const uid = selectedEntry?.id || ""
             const taskref = doc(firestore, "tasks", uid);
-            
+
 
             setDoc(taskref, {
 
@@ -285,45 +285,45 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
         } catch (error) { }
     }
 
-    const update_Sheet =  (date: string, title: string, current_status: string) => {
+    const update_Sheet = (date: string, title: string, current_status: string) => {
         const base = sheetupdateurl
-        
-            const formattedDate = format(date, 'MMM yy'); //date as month year
-            const formated_date = date.split("-").reverse().join("/"); //data date
-            const params = {
-                date: formated_date,
-                title: title,
-                smdoc: smDoc,
-                desc: description,
-                cat: category,
-                platform: platform,
-                url: url,
-                img_url: imgUrl,
-                mention: mentionstring,
-                remarks: remarks,
-                smstatus: sm_status,
-                assignto: assign_to.join(", "),
-                wtw: wtw_status
-            }
-            const query = Object.entries(params)
-                .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v ?? '')}`)
-                .join('&');
 
-            const fullUrl = `${base}?${query}`;
+        const formattedDate = format(date, 'MMM yy'); //date as month year
+        const formated_date = date.split("-").reverse().join("/"); //data date
+        const params = {
+            date: formated_date,
+            title: title,
+            smdoc: smDoc,
+            desc: description,
+            cat: category,
+            platform: platform,
+            url: url,
+            img_url: imgUrl,
+            mention: mentionstring,
+            remarks: remarks,
+            smstatus: sm_status,
+            assignto: assign_to.join(", "),
+            wtw: wtw_status
+        }
+        const query = Object.entries(params)
+            .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v ?? '')}`)
+            .join('&');
 
-            console.log("Full URL:", fullUrl);
+        const fullUrl = `${base}?${query}`;
+
+        console.log("Full URL:", fullUrl);
 
 
-            fetch(fullUrl).
-                then(res => res.text())
-                .then(response => {
+        fetch(fullUrl).
+            then(res => res.text())
+            .then(response => {
 
-                   showToast ? showToast("Sheet updated successfully") :""
-                    //alert("Resp:" + response);
-                })
-                .catch(error => {
-                    alert("Error:" + error);
-                });
+                showToast ? showToast("Sheet updated successfully") : ""
+                //alert("Resp:" + response);
+            })
+            .catch(error => {
+                alert("Error:" + error);
+            });
         //     const res = await fetch(sheetupdateurl, {
         //         method: "POST",
         //         headers: {
@@ -336,7 +336,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
         //     const text = await res.text();
         //     alert("Resp: " + text);
         // } 
-          setClick(!click);
+        setClick(!click);
     }
 
     const clearform = () => {
@@ -371,49 +371,49 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
 
     }
     const deleteentry = async () => {
-    if (!selectedEntry?.id) {
-        alert("No entry selected");
-        return;
-    }
-    
-    const dataRef = ref(db, '/items/' + selectedEntry.id);
-    
-    try {
-        // Delete from Realtime Database first
-        await set(dataRef, null);
-        
-        // Delete linked task from Firestore (by title — primary link)
-        try {
-            const taskByTitleRef = doc(firestore, 'tasks', selectedEntry.title);
-            const titleSnap = await getDoc(taskByTitleRef);
-            if (titleSnap.exists()) {
-                await deleteDoc(taskByTitleRef);
-            }
-        } catch (err) {
-            console.error('Failed to delete task by title:', err);
+        if (!selectedEntry?.id) {
+            alert("No entry selected");
+            return;
         }
-        
-        // Also try by id (secondary link, matches updatetask pattern)
+
+        const dataRef = ref(db, '/items/' + selectedEntry.id);
+
         try {
-            const taskByIdRef = doc(firestore, 'tasks', selectedEntry.id);
-            const idSnap = await getDoc(taskByIdRef);
-            if (idSnap.exists()) {
-                await deleteDoc(taskByIdRef);
+            // Delete from Realtime Database first
+            await set(dataRef, null);
+
+            // Delete linked task from Firestore (by title — primary link)
+            try {
+                const taskByTitleRef = doc(firestore, 'tasks', selectedEntry.title);
+                const titleSnap = await getDoc(taskByTitleRef);
+                if (titleSnap.exists()) {
+                    await deleteDoc(taskByTitleRef);
+                }
+            } catch (err) {
+                console.error('Failed to delete task by title:', err);
             }
-        } catch (err) {
-            console.error('Failed to delete task by id:', err);
+
+            // Also try by id (secondary link, matches updatetask pattern)
+            try {
+                const taskByIdRef = doc(firestore, 'tasks', selectedEntry.id);
+                const idSnap = await getDoc(taskByIdRef);
+                if (idSnap.exists()) {
+                    await deleteDoc(taskByIdRef);
+                }
+            } catch (err) {
+                console.error('Failed to delete task by id:', err);
+            }
+
+            // Existing cleanup
+            delete_from_sheet(selectedEntry.title);
+            clearform();
+            changeformvisibility();
+            //log entry can be added here
+        } catch (error) {
+            console.error('Error deleting data:', error);
+            alert('Failed to delete entry. Please try again.');
         }
-        
-        // Existing cleanup
-        delete_from_sheet(selectedEntry.title);
-        clearform();
-        changeformvisibility();
-        //log entry can be added here
-    } catch (error) {
-        console.error('Error deleting data:', error);
-        alert('Failed to delete entry. Please try again.');
     }
-}
 
     const deleteentry0 = () => {
 
@@ -482,22 +482,22 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
             if (selectedEntry.mention) {
                 const mentionArray = selectedEntry.mention.split(",").map(item => item.trim());
                 setMentions(mentionArray);
-            }else{
+            } else {
                 setMentions([]);
             }
             if (selectedEntry.assigned_to) {
-                 
+
                 const assignToArray = selectedEntry.assigned_to.split(",").map(item => item.trim());
                 setAssignTo(assignToArray);
 
-               
-                
-            }else{
+
+
+            } else {
                 setAssignTo([]);
-               
+
             }
 
-               
+
         }
     }, [selectedEntry, click]);
 
@@ -514,12 +514,12 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
     }
 
 
-      const callsheetque= (action:string)=>{
-            console.log('caling sheet que')
-            const formated_date = date.split("-").reverse().join("/");
-              submitToSheet({
-                
-         timestamp:new Date().toString().split('GMT')[0],
+    const callsheetque = (action: string) => {
+        console.log('caling sheet que')
+        const formated_date = date.split("-").reverse().join("/");
+        submitToSheet({
+
+            timestamp: new Date().toString().split('GMT')[0],
             action: action,
             date: formated_date,
             category: category,
@@ -529,15 +529,15 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
             description: description,
             mention: mentionstring,
             img_url: imgUrl,
-            wtw: wtw_status. toString(),
+            wtw: wtw_status.toString(),
             website: '',
             remarks: remarks,
             sm_status: sm_status,
             assigned_to: assign_to.join(", "),
-            req_by: user ||'',
+            req_by: user || '',
         });
-    
-        }
+
+    }
 
 
 
@@ -573,23 +573,23 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                     </div>
                 )}
 
-               
+
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Date</label>
-                    <input disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className={`  p-2 border-2  ${date_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='date' onChange={(e) => { setDate(e.target.value) }} value={date}></input>
+                    <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`  p-2 border-2  ${date_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='date' onChange={(e) => { setDate(e.target.value) }} value={date}></input>
                 </div>
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Title</label>
-                    <input disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className={`p-2 border-2  ${title_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setTitle(e.target.value) }} value={title}></input>
+                    <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2  ${title_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setTitle(e.target.value) }} value={title}></input>
                 </div>
 
                 <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>
                     <div className='w-full flex flex-col '>
 
-                        <label  className='text-sm font-medium text-gray-600 px-2'>SM Correction Doc URL</label>
-                        <input disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setSmDoc(e.target.value) }} value={smDoc}></input>
+                        <label className='text-sm font-medium text-gray-600 px-2'>SM Correction Doc URL</label>
+                        <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setSmDoc(e.target.value) }} value={smDoc}></input>
 
                     </div>
 
@@ -605,14 +605,14 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                         </datalist>
                     </div> */}
 
-                    <div className={`w-full   ${isRegUser?"flex flex-col":"hidden"} `}>
+                    <div className={`w-full   ${isRegUser ? "flex flex-col" : "hidden"} `}>
                         <label className='text-sm font-medium text-gray-600 px-2'>Dead line</label>
                         <input className={`p-2 border-2  ${deadline_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm text-red-600 `} type='date' onChange={(e) => { setSmDeadline(e.target.value) }} value={Smdeadline}></input>
                     </div>
 
                 </div>
 
-                 {smPostUrl && (
+                {smPostUrl && (
                     <div className="w-full border-t border-gray-100 pt-2 mt-2 mb-3
                         flex flex-col sm:flex-row sm:items-center gap-2">
 
@@ -671,14 +671,14 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
 
                 </div>
 
-                <div className={`text-xs text-red-800 p-2 ${isRegUser?"hidden":"flex"}`}>
+                <div className={`text-xs text-red-800 p-2 ${isRegUser ? "hidden" : "flex"}`}>
                     <h1 >Deadline: {Smdeadline}</h1>
 
                 </div>
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Assign to</label>
-                    <input className={`p-2 border-2 border-gray-100 rounded-xl shadow text-sm ${isRegUser && role==="admin"?"":"hidden"}`} type='text' list='assign' onKeyDown={(e) => {
+                    <input className={`p-2 border-2 border-gray-100 rounded-xl shadow text-sm ${isRegUser && role === "admin" ? "" : "hidden"}`} type='text' list='assign' onKeyDown={(e) => {
                         if (e.key === 'Enter' && e.currentTarget.value.trim() !== "") {
                             if (!assign_to.includes(e.currentTarget.value.trim())) {
                                 setAssignTo([...assign_to, e.currentTarget.value.trim()]);
@@ -712,13 +712,13 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                 <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>
                     <div className='w-full flex flex-col '>
 
-                        <label className='text-sm font-medium text-gray-600 px-2' ><a className={`${url.includes("http")?"flex":"hidden"}`} href={url} target="_blank">URL 🔗</a> <p className={`${url.includes("http")?"hidden":"flex"}`}>URL</p></label>
-                        <input disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className={`p-2 border-2 ${url_error?"border-red-200":"border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
+                        <label className='text-sm font-medium text-gray-600 px-2' ><a className={`${url.includes("http") ? "flex" : "hidden"}`} href={url} target="_blank">URL 🔗</a> <p className={`${url.includes("http") ? "hidden" : "flex"}`}>URL</p></label>
+                        <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2 ${url_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
                     </div>
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>Image URL</label>
-                        <input disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
+                        <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
                     </div>
 
                 </div>
@@ -726,7 +726,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Description</label>
-                    <textarea disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
+                    <textarea disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
                 </div>
 
 
@@ -734,7 +734,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>Category</label>
-                        <select disabled={!isRegUser && selectedEntry?.addedBy!=userEmail}
+                        <select disabled={!isRegUser && selectedEntry?.addedBy != userEmail}
                             className={`p-2 border-2 ${categorry_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`}
                             value={category}
                             onChange={(e) => { setCategory(e.target.value) }}
@@ -752,7 +752,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>Platform</label>
-                        <input disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='platform' onChange={(e) => { setPlatform(e.target.value) }} value={platform}>
+                        <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='platform' onChange={(e) => { setPlatform(e.target.value) }} value={platform}>
                         </input>
                         <datalist id='platform'>
                             {platformlist.map((item, index) => (
@@ -766,7 +766,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Tags</label>
                     <TagInput
-                    disabeled={!isRegUser && selectedEntry?.addedBy!=userEmail}
+                        disabeled={!isRegUser && selectedEntry?.addedBy != userEmail}
                         value={tags}
                         onChange={setTags}
                         suggestions={tagSuggestions}
@@ -777,11 +777,11 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <div className='flex flex-row gap-4 items-center'>
-                        <label className='text-sm font-medium text-gray-600 px-2 cursor-copy' onClick={()=>{copy_mentions_clipboard(mentionstring)}}>Mentions ⧉ </label>
-                          <div className={`${isshowcopy?"flex":"hidden"} text-sm text-green-700`}>Copied</div>
+                        <label className='text-sm font-medium text-gray-600 px-2 cursor-copy' onClick={() => { copy_mentions_clipboard(mentionstring) }}>Mentions ⧉ </label>
+                        <div className={`${isshowcopy ? "flex" : "hidden"} text-sm text-green-700`}>Copied</div>
                     </div>
-                    
-                    <input disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='mentions' onKeyDown={(e) => {
+
+                    {/* <input disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='mentions' onKeyDown={(e) => {
                         if ((e.key === 'Enter' || e.key === ',' ) && e.currentTarget.value.trim() !== "") {
                             if (!mentions.includes(e.currentTarget.value.trim())) {
                                 setMentions([...mentions, e.currentTarget.value.trim()]);
@@ -791,7 +791,33 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                             }
                         }
                     }}  >
-                    </input>
+                    </input> */}
+
+                    <input
+                        disabled={!isRegUser && selectedEntry?.addedBy != userEmail}
+                        className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm'
+                        type='text'
+                        list='mentions'
+                        onKeyDown={(e) => {
+                            if ((e.key === 'Enter' || e.key === ',') && e.currentTarget.value.trim() !== "") {
+                                e.preventDefault();
+                                if (!mentions.includes(e.currentTarget.value.trim())) {
+                                    setMentions([...mentions, e.currentTarget.value.trim()]);
+                                }
+                                e.currentTarget.value = "";
+                            }
+                        }}
+                        onBlur={(e) => {
+                            const value = e.currentTarget.value.trim();
+                            if (value !== "" && !mentions.includes(value)) {
+                                setMentions([...mentions, value]);
+                            }
+                            e.currentTarget.value = "";
+                        }}
+                    />
+
+
+
                     <datalist id='mentions'>
                         {mentionlist.map((item, index) => (
                             <option key={index} value={item}>{item}</option>
@@ -801,7 +827,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                         {mentions.map((item, index) => (
                             <div className='border-2 p-2 flex gap-2 rounded-2xl' key={index}>
                                 <div>{item}</div>
-                                <div className='cursor-pointer' onClick={() => {if(!isRegUser && selectedEntry?.addedBy!=userEmail) {return} setMentions(mentions.filter((_, i) => i !== index))}}
+                                <div className='cursor-pointer' onClick={() => { if (!isRegUser && selectedEntry?.addedBy != userEmail) { return } setMentions(mentions.filter((_, i) => i !== index)) }}
                                 >x</div>
                             </div>
                         ))}
@@ -812,12 +838,12 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Remarks</label>
-                    <textarea disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={(e) => { setRemarks(e.target.value) }} value={remarks}></textarea>
+                    <textarea disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={(e) => { setRemarks(e.target.value) }} value={remarks}></textarea>
                 </div>
 
 
-                <div className={`w-full flex flex-col justify-center gap-4 py-1 mt-4  sm:flex-row ${isRegUser ||selectedEntry?.addedBy===userEmail?"flex":"hidden"}`}>
-                    <div className='px-4 py-2 border-2 border-orange-300 shadow hover:bg-orange-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => {  changeformvisibility(); }}>Cancel</div>
+                <div className={`w-full flex flex-col justify-center gap-4 py-1 mt-4  sm:flex-row ${isRegUser || selectedEntry?.addedBy === userEmail ? "flex" : "hidden"}`}>
+                    <div className='px-4 py-2 border-2 border-orange-300 shadow hover:bg-orange-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { changeformvisibility(); }}>Cancel</div>
 
                     <div className='px-4 py-2 border-2 border-red-300 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { setIscnfwindowopen(true) }}>Delete</div>
 
@@ -848,6 +874,6 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
 
         </div>
     )
-} 
+}
 
 export default Editform

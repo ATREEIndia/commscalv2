@@ -460,7 +460,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                     <label className='text-sm font-medium text-gray-600 px-2'>Mentions</label>
                     <span className='text-xs font-medium text-gray-600 px-2'>Use comma(,) or Enter key to add</span>
 
-                    <form onSubmit={(e) => {
+                    {/* <form onSubmit={(e) => {
                         e.preventDefault();
                         const input = e.currentTarget.elements.namedItem('mentionInput') as HTMLInputElement;
                         const value = input.value.trim();
@@ -484,6 +484,41 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                                     }
                                     e.currentTarget.value = "";
                                 }
+                            }}
+                        />
+                    </form> */}
+
+                    <form onSubmit={(e) => {
+                        e.preventDefault();
+                        const input = e.currentTarget.elements.namedItem('mentionInput') as HTMLInputElement;
+                        const value = input.value.trim();
+                        if (value !== "" && !mentions.includes(value)) {
+                            setMentions([...mentions, value]);
+                        }
+                        input.value = "";
+                    }}>
+                        <input
+                            name='mentionInput'
+                            className='p-2 border-2 w-full border-gray-100 rounded-xl shadow text-sm'
+                            type='text'
+                            list='mentions'
+                            enterKeyHint='enter'
+                            onKeyDown={(e) => {
+                                if (e.key === ',' && e.currentTarget.value.trim() !== "") {
+                                    e.preventDefault();
+                                    const value = e.currentTarget.value.trim();
+                                    if (!mentions.includes(value)) {
+                                        setMentions([...mentions, value]);
+                                    }
+                                    e.currentTarget.value = "";
+                                }
+                            }}
+                            onBlur={(e) => {
+                                const value = e.currentTarget.value.trim();
+                                if (value !== "" && !mentions.includes(value)) {
+                                    setMentions([...mentions, value]);
+                                }
+                                e.currentTarget.value = "";
                             }}
                         />
                     </form>
