@@ -13,6 +13,10 @@ import Viewdata from '../Components/Viewdata'
 import UpcomingEnvDays from '../Components/UpcomingEnvDays'
 import { useEnvDays } from '../hooks/useEnvDays'
 import type { SMPost } from './types'
+import { useRouter } from 'next/navigation'
+import { Divide, X } from 'lucide-react'
+
+
 
 const PRIORITY_CFG = {
   overdue: { label: 'Overdue', bg: 'bg-red-100', text: 'text-red-600', border: 'border-red-200' },
@@ -31,6 +35,10 @@ function getPriorityLevel(deadline: string | undefined): keyof typeof PRIORITY_C
 }
 
 export default function SmCalPage() {
+
+   const router = useRouter()
+
+
   const [user, setUser] = useState<any>(null)
   const [posts, setPosts] = useState<SMPost[]>([])
   const [tasks, setTasks] = useState<taskprobs[]>([])
@@ -42,9 +50,11 @@ export default function SmCalPage() {
   const [viewingTask, setViewingTask] = useState<taskprobs | null>(null)
 
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const[isAlert, setIsAlert]=useState(false)
 
   const { users } = useUsers()
   const isAdmin = users.find((u) => u.email === user?.email)?.role === 'admin'
+  const reg_users = users.some((u) => u.email === user?.email)
   const { days: envDays } = useEnvDays()
 
   useEffect(() => {
@@ -65,6 +75,12 @@ export default function SmCalPage() {
   }, [])
 
   const openNewPost = (dateStr = '') => {
+
+    setIsAlert(true)
+
+
+    return;
+    
     setPrefilledDate(dateStr)
     setShowNewPost(true)
   }
@@ -183,7 +199,7 @@ export default function SmCalPage() {
           />
         </div>
 
-        {isAdmin && pendingTasks.length > 0 && (
+        {reg_users && pendingTasks.length > 0 && (
 
           <div
             className="bg-white rounded-2xl shadow-sm border border-gray-200 flex-shrink-0 overflow-hidden"
@@ -410,6 +426,28 @@ export default function SmCalPage() {
           }}
         />
       )}
+
+      {/* alert dialog */}
+
+      {isAlert && <div onClick={()=>setIsAlert(false)} className='w-full h-screen fixed z-15 bg-black/40 border-2 flex items-center justify-center p-4'>
+      <div className='bg-white p-4 rounded-xl shadow-lg flex flex-col gap-5 lg:max-w-[40%]'>
+       <div className='flex items-center justify-between gap-5'>
+         <h1 className='font-semibold text-gray-00'>Alert: Direct additions are blocked </h1>
+        <X onClick={()=>setIsAlert(false)} className='hover:text-red-500 cursor-pointer active:scale-5'/>
+
+        </div>
+       
+        <p className='text-sm select-none'>Please add to the Database first and assign a person to do the task. Then using the prompted window add to smcal</p>
+        <p className='text-xs p-2 bg-amber-200'>This will ensure that the database entry and the smcal entries are connected. </p>
+        <div className='flex items-center justify-center gap-5'>
+          
+          <button onClick={()=>  router.push('/database')} className='p-2 rounded-xl bg-white-500 hover:font-semibold bg-blue-100 hover:text-white hover:bg-blue-600 border-2 border-blue-200 cursor-pointer active:scale-90'>Open Database</button>
+
+        </div>
+
+      </div>
+
+        </div>}
 
       {selectedPostId && (
         <PostDetail
