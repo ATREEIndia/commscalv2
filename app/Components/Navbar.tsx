@@ -19,6 +19,7 @@ import { emailToColor, getInitial } from '../../lib/assignColor'
 import type { AppNotification } from '../smcal/types'
 import Image from 'next/image'
 import { UserMyAppContext } from '../Context/MyAppContext'
+import { Users } from 'lucide-react'
 
 function timeAgo(ts: AppNotification['createdAt'] | undefined | null): string {
   if (!ts?.toMillis) return ''
@@ -388,12 +389,9 @@ const Navbar = ({ current_page }: navprobes) => {
                   ? "bg-white/20"
                   : "bg-blue-950/40 group-hover:bg-white/10"
                 }`}>
-                <Image
-                  src="/user.png"
-                  alt="Users"
-                  width={18}
-                  height={18}
-                  className="opacity-90"
+                <Users
+                  size={20}
+                  
                 />
               </div>
               <span className="hidden sm:block text-sm font-medium">Users</span>
