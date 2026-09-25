@@ -421,7 +421,7 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
 
 
     return (
-        <div className='w-full h-screen relative flex justify-center  ' >
+        <div className='w-full h-screen relative flex justify-center items-center ' >
             <div className='absolute top-0 left-0 bg-black opacity-15 w-full h-full' onClick={changeformvisibility}></div>
 
             <div className='absolute w-[90%] max-h-[80%] p-4 flex flex-col z-30 bg-white rounded-lg shadow-lg m-4 overflow-y-scroll ' >
@@ -626,13 +626,13 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
                 <div className={`w-full ${useremail?.length ? 'flex' : 'hidden'} flex-col justify-center gap-4 py-1 mt-4  sm:flex-row`}>
                     <div className='px-4 py-2 border-2 border-orange-300 shadow hover:bg-orange-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { clearform(); changeformvisibility(); }}>Cancel</div>
 
-                    <div className='px-4 py-2 border-2 border-red-300 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { mark_as("Working") }}>Mark as Pending</div>
+                    {/* <div className='px-4 py-2 border-2 border-red-300 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { mark_as("Working") }}>Mark as Pending</div> */}
 
                     {/* <div className='px-4 py-2 border-2 border-green-300 shadow hover:bg-green-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { mark_as('Posted') }}>Mark as Completed</div> */}
 
                     <a href={smPostUrl} target='_blank' className='px-4 py-2 border-2 border-green-300 shadow hover:bg-green-500 hover:text-white rounded-2xl cursor-pointer text-center' >Mark as Posted</a>
 
-                    <div className='px-4 py-2 border-2 border-red-500 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { delete_task() }}>Delete Task</div>
+                    {/* <div className='px-4 py-2 border-2 border-red-500 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { delete_task() }}>Delete Task</div> */}
                 </div>
 
 
