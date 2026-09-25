@@ -44,6 +44,7 @@ export async function notify({ recipients, actor, type, postId, postTitle, messa
   if (!url) {
     throw new Error('NEXT_PUBLIC_MAIL_SCRIPT env var is not set');
   }
+  if(message.includes('approval email')){return}
 
   const res = await fetch(
 
@@ -56,8 +57,8 @@ export async function notify({ recipients, actor, type, postId, postTitle, messa
           ? [...new Set(recipients.filter(Boolean))].join(',')
           : recipients,
         user: actor?.email,
-        subject: `${type}: ${postTitle}`,
-        message:message+`\n\nhttps://commscal.atree.org/smcal/${postId} `,
+        subject: `${postTitle}`,
+        message:type+'\n'+message+`\n\nhttps://commscal.atree.org/smcal/${postId} `,
       }),
     }
   );
