@@ -25,7 +25,7 @@ import { useMediaType } from '../hooks/useMediaType'
 import dayjs, { IST } from '../../lib/dayjs'
 import { notify } from '../../lib/notifications'
 import { emailToColor, getInitial } from '../../lib/assignColor'
-import { useUsers } from '../constants'
+import { SEED_EMAILS, useUsers } from '../constants'
 import CommentThread from './CommentThread'
 import HistoryLog from './HistoryLog'
 import ImageSlotList from './ImageSlotList'
@@ -42,10 +42,10 @@ const STATUS_CFG = {
 
 // ── Mail config ────────────────────────────────────────────────────────────────
 // Starter suggestions shown before any mail has been sent — replace with your own
-const SEED_EMAILS: string[] = [
-  'communications@atree.org',
-  // 'someone@atree.org',
-]
+// const SEED_EMAILS: string[] = [
+//   'communications@atree.org',
+//   // 'someone@atree.org',
+// ]
 
 // Shared Firestore doc that remembers every address an approval mail was sent to
 const RECIPIENTS_DOC_PATH = ['meta', 'mailRecipients'] as const

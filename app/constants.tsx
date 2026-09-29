@@ -3,85 +3,85 @@ import { collection, getDocs } from "firebase/firestore"
 import { firestore } from "./firebase/firebase"
 import { use, useCallback, useEffect, useState } from "react"
 import type { IconType } from "react-icons"
-import { FaInstagram,FaRegFileExcel , FaReceipt, FaDatabase, FaCalendarAlt ,FaTasks ,FaFlipboard     } from "react-icons/fa"
+import { FaInstagram, FaRegFileExcel, FaReceipt, FaDatabase, FaCalendarAlt, FaTasks, FaFlipboard } from "react-icons/fa"
 
 
 
 
 export type NavItem = {
-    name: string,
-    href: string,
-    icon: string,
-    reactIcon?: IconType,
-    no_reg?:boolean,
+  name: string,
+  href: string,
+  icon: string,
+  reactIcon?: IconType,
+  no_reg?: boolean,
 }
 
 export const nav_items: NavItem[] = [
-    { name: "Dashboard", href: "/", icon: "/dashboard.png",reactIcon: FaFlipboard, no_reg:true},
-    { name: "My Tasks", href: "/task", icon: "/task.png",reactIcon: FaTasks, no_reg:false },
-    { name: "Database", href: "/database", icon: "/db.png",reactIcon: FaDatabase, no_reg:true},
-    { name: "SM Cal", href: "/smcal", icon: "/sm_plan.png",reactIcon: FaCalendarAlt  ,no_reg:false},
-    // { name: "Website", href: "/website", icon: "/website.png" },
-    { name: "InstaLinks", href: "/instalinks", icon: "", reactIcon: FaInstagram , no_reg:false},
-    { name: "My Data", href: "/myData", icon: "", reactIcon: FaReceipt  , no_reg:true},
-    { name: "Google sheet", href: "https://docs.google.com/spreadsheets/d/18I8QnxgKxle1-pA6Cw9_VEa6hnTk_nzAApl_IV194hc/edit?",reactIcon: FaRegFileExcel, icon: "/gs.png", no_reg:false },
+  { name: "Dashboard", href: "/", icon: "/dashboard.png", reactIcon: FaFlipboard, no_reg: true },
+  { name: "My Tasks", href: "/task", icon: "/task.png", reactIcon: FaTasks, no_reg: false },
+  { name: "Database", href: "/database", icon: "/db.png", reactIcon: FaDatabase, no_reg: true },
+  { name: "SM Cal", href: "/smcal", icon: "/sm_plan.png", reactIcon: FaCalendarAlt, no_reg: false },
+  // { name: "Website", href: "/website", icon: "/website.png" },
+  { name: "InstaLinks", href: "/instalinks", icon: "", reactIcon: FaInstagram, no_reg: false },
+  { name: "My Data", href: "/myData", icon: "", reactIcon: FaReceipt, no_reg: true },
+  { name: "Google sheet", href: "https://docs.google.com/spreadsheets/d/18I8QnxgKxle1-pA6Cw9_VEa6hnTk_nzAApl_IV194hc/edit?", reactIcon: FaRegFileExcel, icon: "/gs.png", no_reg: false },
 ]
 
-export type taskprobs={
- 
-    title:string,
-    url?:string,
-    description?:string,
-    date?:string,
-    deadline?:string,
-    assigned_to:string[],
-    completed_by?:string[],
-    current_status?:string,    
-    subtitle?: string,     
-    smdoc?: string,
-    status?: string,
-    createdon: string, 
- 
-   
-    sm_status?: string,
-    website_status?: boolean,
-    category?: string,
-    platform?: string,
-    img_url?: string,
-    mention?: string,
-    remarks?: string,
-     id?: string,
-    hidden?: boolean,
-    linkedSmPostId?: string,
+export type taskprobs = {
+
+  title: string,
+  url?: string,
+  description?: string,
+  date?: string,
+  deadline?: string,
+  assigned_to: string[],
+  completed_by?: string[],
+  current_status?: string,
+  subtitle?: string,
+  smdoc?: string,
+  status?: string,
+  createdon: string,
+
+
+  sm_status?: string,
+  website_status?: boolean,
+  category?: string,
+  platform?: string,
+  img_url?: string,
+  mention?: string,
+  remarks?: string,
+  id?: string,
+  hidden?: boolean,
+  linkedSmPostId?: string,
 
 }
 
 
 export type itemprobes = {
-    title: string,    
-    date: string,
-    deadline?: string,
-    smdoc?: string,
-    status?: string,
-    createdon: string,
-    description: string,
-    url: string,
-    sm_status: string,
-    website_status: boolean,
-    category: string,
-    platform: string,
-    img_url: string,
-    mention: string,
-    remarks: string,
-    id?: string,
-    assigned_to?: string,
-    wtw_status?:boolean,
-    addedBy?: string,
-    addedAt?: number,
-    updatedBy?: string,
-    updatedAt?: number,
-    smPostId?: string,
-    tags?: string[],
+  title: string,
+  date: string,
+  deadline?: string,
+  smdoc?: string,
+  status?: string,
+  createdon: string,
+  description: string,
+  url: string,
+  sm_status: string,
+  website_status: boolean,
+  category: string,
+  platform: string,
+  img_url: string,
+  mention: string,
+  remarks: string,
+  id?: string,
+  assigned_to?: string,
+  wtw_status?: boolean,
+  addedBy?: string,
+  addedAt?: number,
+  updatedBy?: string,
+  updatedAt?: number,
+  smPostId?: string,
+  tags?: string[],
 }
 
 export const CATEGORIES0 = [
@@ -162,13 +162,13 @@ export function buildTagSuggestions(items: itemprobes[]): string[] {
   // Merge seed + dynamic, dedupe case-insensitively, keep first occurrence
   const seen = new Set<string>()
   const merged: string[] = []
-  ;[...SEED_TAGS, ...dynamic].forEach((tag) => {
-    const key = tag.toLowerCase()
-    if (!seen.has(key)) {
-      seen.add(key)
-      merged.push(tag)
-    }
-  })
+    ;[...SEED_TAGS, ...dynamic].forEach((tag) => {
+      const key = tag.toLowerCase()
+      if (!seen.has(key)) {
+        seen.add(key)
+        merged.push(tag)
+      }
+    })
 
   return merged
 }
@@ -192,7 +192,7 @@ export const categorylist = [
 ]
 
 export const platformlist = [
-   "Systematics and Biodiversity",
+  "Systematics and Biodiversity",
   "Money Control",
   "Sociobiology",
   "food-webs",
@@ -251,7 +251,7 @@ export const platformlist = [
   "Systematic Entomology"]
 
 export const mentionlist = [
-   "Kamaljit S. Bawa",
+  "Kamaljit S. Bawa",
   "Atul Joshi",
   "Balaram",
   "Amita Baviskar",
@@ -447,9 +447,9 @@ export const mentionlist = [
   "Anubhav Shori"]
 
 
-  
+
 // export const userlist:string[]=[];
- 
+
 
 
 //   try {
@@ -459,7 +459,7 @@ export const mentionlist = [
 //           id: doc.id,
 //           ...doc.data()
 //         }));
-        
+
 
 //     userlist.push(...users.map(user => user.email));
 //     // You can set this to state if you want to display it
@@ -501,7 +501,7 @@ export function useUsers() {
 //   const [users, setUsers] = useState<any[]>([]);
 //   const [loading, setLoading] = useState(true);
 
-  
+
 
 
 //     const fetchUsers = async () => {
@@ -520,7 +520,7 @@ export function useUsers() {
 //         setLoading(false);
 //       }
 //     };
- 
+
 
 //   useEffect(() => {
 //     fetchUsers();
@@ -530,9 +530,13 @@ export function useUsers() {
 // }
 
 
-export const sheetupdateurl="https://script.google.com/macros/s/AKfycbwtSeFqApXZAzldCpwd86Dg4jlTP2-epuJ9KHtD6YYGfSvNLFyabUOEF7IDe3tI5SPUZA/exec";
-export const delete_sheet_row_url="https://script.google.com/macros/s/AKfycbxQbhvBoDQvwGWIh7e6kjYpXCIMjFCUalH2TZtp01uNcgORwrGzyCofajJfyg2eGbcA/exec";
-export const updatewtwsheet_url="https://script.google.com/macros/s/AKfycbwNqfUAawsMv-BoRB9DyYeDWudnh230I8bO_7Odn37MyNzD9RRsRVUN0L1rDm0r9TkD0A/exec";
+export const sheetupdateurl = "https://script.google.com/macros/s/AKfycbwtSeFqApXZAzldCpwd86Dg4jlTP2-epuJ9KHtD6YYGfSvNLFyabUOEF7IDe3tI5SPUZA/exec";
+export const delete_sheet_row_url = "https://script.google.com/macros/s/AKfycbxQbhvBoDQvwGWIh7e6kjYpXCIMjFCUalH2TZtp01uNcgORwrGzyCofajJfyg2eGbcA/exec";
+export const updatewtwsheet_url = "https://script.google.com/macros/s/AKfycbwNqfUAawsMv-BoRB9DyYeDWudnh230I8bO_7Odn37MyNzD9RRsRVUN0L1rDm0r9TkD0A/exec";
 
-
+export const SEED_EMAILS: string[] = [
+  'communications@atree.org',
+  'tganesh@atree.org', 'priyan@atree.org', 'rganesan@atree.org', 'rajkamal@atree.org', 'seshadri.ks@atree.org', 'slele@atree.org', 'sbadiger@atree.org', 'siddappa@atree.org', 'siddhartha.krishnan@atree.org', 'soubadra@atree.org', 'anirban.roy@atree.org', 'amritha.yadav@atree.org', 'amruta.pradhan@atree.org', 'aneesh.cr@atree.org', 'anuja.datye@atree.org', 'iravatee.m@atree.org', 'jintu.vijayan@atree.org', 'kesang.bhutia@atree.org', 'lakshmikantha.nr@atree.org', 'nita.shashidharan@atree.org', 'kardamprachi@atree.org', 'rashmi.kulranjan@atree.org', 'rashmi.mahajan@atree.org', 'sahiti.sanaka@atree.org', 'sarika@atree.org', 'shruti.samanta@atree.org', 'sminu.tv@atree.org', 'sneha.shahi@atree.org', 'ranjni.ts@atree.org', 'sumita.bhattacharyya@atree.org', 'aditya.pradhan@atree.org', 'ananda.siddhartha@atree.org', 'avantika.thapa@atree.org', 'monsoon.jyoti@atree.org', 'pema.yangden@atree.org', 'shruti.mokashi@atree.org', 'sunita.pradhan@atree.org', 'hiremath@atree.org', 'durba.biswas@atree.org', 'ghazala@atree.org', 'jagdish@atree.org', '', 'veena.srinivasan@atree.org', '', 'gbalachander@atree.org', 'sachin.tiwale@atree.org', 'ashish.kumar@atree.org', 'vinay.sankar@atree.org', 'sailendra.dewan@atree.org', 'ranjith.ht@atree.org', 'seema.purushothaman@atree.org', 'prasanna.ns@atree.org', 'sneha.s@atree.org', 'hritik.bhatnagar@atree.org', 'ramya.angandi@atree.org', 'vivek.m@atree.org', 'eapsa.berry@atree.org', 'sagna.a@atree.org', 'jayanth.shivaramegowda@atree.org', 'kunal.pardeshi@atree.org',  'amal.narayanan@atree.org', 'chaithra.parambu@atree.org', 'krithika.sampath@atree.org', 'lochana.ravishankar@atree.org', 'nabanita.ghosh@atree.org', 'roshin.mathew@atree.org', 'sesha.kanumuri@atree.org', 'shilpa.bose@atree.org', 'tania.das@atree.org', 'arathy.madhu@atree.org', 'anushka.gurung@atree.org', 'gowthami.r@atree.org', 'hrudya.sundaresan@atree.org', 'jason.dg@atree.org', 'meera.panicker@atree.org', 'rubin.lobo@atree.org', 'sonam.yangchen@atree.org', 'deepanjana.saha@atree.org', 'priyanka.borah@atree.org', 'tithi.kagathara@atree.org', 'vinay.kumar@atree.org'
+  // 'someone@atree.org',
+]
 
