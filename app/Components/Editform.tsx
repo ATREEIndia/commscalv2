@@ -678,7 +678,8 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Assign to</label>
-                    <input className={`p-2 border-2 border-gray-100 rounded-xl shadow text-sm ${isRegUser && role === "admin" ? "" : "hidden"}`} type='text' list='assign' onKeyDown={(e) => {
+                    <input className={`p-2 border-2 border-gray-100 rounded-xl shadow text-sm ${isRegUser && role === "admin" ? "" : "hidden"}`} type='text' list='assign' 
+                    onKeyDown={(e) => {
                         if (e.key === 'Enter' && e.currentTarget.value.trim() !== "") {
                             if (!assign_to.includes(e.currentTarget.value.trim())) {
                                 setAssignTo([...assign_to, e.currentTarget.value.trim()]);
@@ -687,7 +688,18 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
                                 e.currentTarget.value = "";
                             }
                         }
-                    }}  >
+                    }}
+
+                     onBlur={(e) => {
+                            const value = e.currentTarget.value.trim();
+                            if (value !== "" && !assign_to.includes(value)) {
+                                setAssignTo([...assign_to, value]);
+                            }
+                            e.currentTarget.value = "";
+                        }}
+                    
+                    
+                    >
                     </input>
                     <datalist id='assign'>
                         {userlist.map((item, index) => (

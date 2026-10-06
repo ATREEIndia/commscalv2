@@ -53,9 +53,13 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
 
 
     const [message, setMessage] = useState<string>('Select a file to start the upload.');
+    const [message_img, setMessage_img] = useState<string>('Select a image to upload.');
     const [loading, setLoading] = useState<boolean>(false);
+    const [loading_img, setLoading_img] = useState<boolean>(false);
     const [uploadlabel, setuploadlabel] = useState("Select a file");
+    const [uploadlabel_img, setuploadlabel_img] = useState("Upload an image");
     const [uplaodStatus, setUploadStataus] = useState(true)
+    const [uplaodStatus_img, setUploadStataus_img] = useState(true)
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (loading) {
@@ -112,6 +116,75 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
             setLoading(false)
             setuploadlabel("Select a file")
             setUploadStataus(true)
+
+
+
+
+        }
+
+
+    }
+
+    const handleFileUpload_img = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (loading_img) {
+            setMessage_img('upload in progress')
+            return;
+        }
+
+
+        const selecetedFile = e.target.files?.[0]
+
+        if (!selecetedFile) {
+            alert("No file selecetd")
+            return;
+        }
+        if (!selecetedFile.type.startsWith("image/")) {
+            alert("Please select an image file")
+            e.target.value = ""
+            return
+        }
+
+        //check file selected
+        setUploadStataus_img(true)
+        setLoading_img(true)
+        setMessage_img("uploading image " + selecetedFile.name)
+        setuploadlabel_img("Uploading image " + selecetedFile.name)
+
+        try {
+            const formData = new FormData();
+            formData.append('file', selecetedFile);
+            formData.append("fileName", selecetedFile.name)
+
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            })
+
+
+
+            if (!response.ok) {
+                const errordata = await response.json()
+                setUploadStataus_img(false)
+                throw new Error(errordata.error || "upload failed on server");
+            }
+
+            const resposeData = await response.json()
+
+            const data: UploadResponse = resposeData;
+
+            console.log(data.filelink)
+            setImgUrl(data.filelink + "")
+
+            e.target.value = ''
+
+        } catch (error) {
+            console.log("upload error: " + error)
+            setUploadStataus_img(false)
+
+        } finally {
+            setLoading_img(false)
+            setuploadlabel_img("Select an image")
+            setUploadStataus_img(true)
 
 
 
@@ -404,6 +477,25 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
 
                         <label className='text-sm font-medium text-gray-600 px-2'>Image URL</label>
                         <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
+
+                        <p className='text-xs text-blue-700 px-2'>Max upload size 3 MB. If larger provide the link after uploading to a drive</p>
+
+
+                        <div className='flex items-center p-2'>
+                            <label
+                                htmlFor="fileUpload_img"
+                                className="cursor-pointer text-sm bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition"
+                            >
+                                {uploadlabel_img}
+                            </label>
+                            <input
+                                id="fileUpload_img"
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileUpload_img}
+                                className="text-sm bg-blue-200 text-center rounded-xl shadow-xl p-2 hidden "
+                            />
+                        </div>
                     </div>
 
                 </div>
@@ -457,7 +549,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                 </div>
 
                 <div className='w-full flex flex-col py-1 mt-4'>
-                    <label className='text-sm font-medium text-gray-600 px-2'>Mentions</label>
+                    <label className='text-sm font-medium text-gray-600 px-2'>Mentions / Authors</label>
                     <span className='text-xs font-medium text-gray-600 px-2'>Use comma(,) or Enter key to add</span>
 
                     {/* <form onSubmit={(e) => {

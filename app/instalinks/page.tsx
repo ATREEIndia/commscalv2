@@ -179,7 +179,7 @@ const Page = () => {
     }
 
     return (
-        <main className=" flex gap-4 h-full w-full relative p-2 ">
+        <main className=" flex gap-4 h-full w-full relative  ">
             {/* left navigations */}
             {/* <Navbar current_page="InstaLinks" /> */}
 
