@@ -17,7 +17,7 @@ export default function TagInput({
   onChange,
   suggestions,
   maxTags = 5,
-  minTags = 2,
+  minTags = 0,
   disabeled=false,
   placeholder = 'Type a tag and press Enter',
 }: Props) {

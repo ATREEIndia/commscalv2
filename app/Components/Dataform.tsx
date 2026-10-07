@@ -47,6 +47,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
     const [categorry_error, setCategory_error] = useState<boolean>(false);
     const [title_error, setTitle_error] = useState<boolean>(false);
     const [url_error, seturl_error] = useState<boolean>(false);
+    const [desc_error, setdesc_error] = useState<boolean>(false);
 
 
 
@@ -280,15 +281,20 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
         else {
             setCategory_error(false);
         }
-        if (url == "") {
-            seturl_error(true);
+        if (description.length<1) {
+             setdesc_error(true);
+           
         }
         else {
-            seturl_error(false);
+            setdesc_error(false);
+        }
+
+        if(url==""){
+            setUrl('No URL')
         }
 
 
-        if (date == "" || title == "" || category == "" || url == "") {
+        if (date == "" || title == "" || category == "" || description=="") {
 
             alert("Please fill all the required fields");
             return;
@@ -298,10 +304,10 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
             alert('Please pick a valid category from the dropdown (legacy values are no longer supported)');
             return;
         }
-        if (tags.length < 2) {
-            alert('Please add at least 2 tags');
-            return;
-        }
+        // if (tags.length < 2) {
+        //     alert('Please add at least 2 tags');
+        //     return;
+        // }
         if (tags.length > 5) {
             alert('Maximum 5 tags allowed');
             return;
@@ -311,6 +317,8 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
             "create"
 
         );
+
+        const finalUrl = url.trim() === "" ? "No URL" : url;
 
 
 
@@ -323,7 +331,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
             description: description,
             category: category,
             platform: platform,
-            url: url,
+            url: finalUrl,
             img_url: imgUrl,
             sm_status: "",
             mention: mentionstring,
@@ -443,13 +451,14 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>SM Correction Doc URL</label>
+                    <p className='text-xs px-2 text-blue-700'>For slide breakdown for social media </p>
                     <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setSmDoc(e.target.value) }} value={smDoc}></input>
                 </div>
 
                 <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>
                     <div className='w-full flex flex-col '>
 
-                        <label className='text-sm font-medium text-gray-600 px-2'>URL*</label>
+                        <label className='text-sm font-medium text-gray-600 px-2'>Publication / Document URL*</label>
                         <input className={`p-2 border-2 ${url_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
                         {!uplaodStatus && <span className='text-sm text-red-800 px-2'>File Uplod failed. Upload to the <a className='text-blue-700 underline' href='https://drive.google.com/drive/folders/1YgMS9-em71U_UfSdfydsihLgOggTrUDI' target='_blank'>folder</a> direcly and paste the url</span>}
                         {uplaodStatus && <span className='text-sm text-blue-800 px-2'>Max upload size is 4 MB. If larger, upload to the <a className='text-blue-500 font-bold underline' href='https://drive.google.com/drive/folders/1YgMS9-em71U_UfSdfydsihLgOggTrUDI' target='_blank'>folder</a> direcly and paste the url</span>}
@@ -475,7 +484,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                     </div>
                     <div className='w-full flex flex-col '>
 
-                        <label className='text-sm font-medium text-gray-600 px-2'>Image URL</label>
+                        <label className='text-sm font-medium text-gray-600 px-2'>🖼️ Featuring Image URL ( for newsletter)</label>
                         <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
 
                         <p className='text-xs text-blue-700 px-2'>Max upload size 3 MB. If larger provide the link after uploading to a drive</p>
@@ -502,8 +511,8 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
 
 
                 <div className='w-full flex flex-col py-1 mt-4'>
-                    <label className='text-sm font-medium text-gray-600 px-2'>Description</label>
-                    <textarea className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
+                    <label className='text-sm font-medium text-gray-600 px-2'>Description*</label>
+                    <textarea className={`p-2 border-2 ${desc_error?'border-red-200':'border-gray-100'} rounded-xl shadow text-sm`} onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
                 </div>
 
 
@@ -538,7 +547,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                 </div>
 
                 <div className='w-full flex flex-col py-1 mt-4'>
-                    <label className='text-sm font-medium text-gray-600 px-2'>Tags *</label>
+                    <label className='text-sm font-medium text-gray-600 px-2'>Tags </label>
                     <TagInput
                         value={tags}
                         onChange={setTags}
