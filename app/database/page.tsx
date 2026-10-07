@@ -30,6 +30,7 @@ const Page = () => {
     const [wtw_status, setwtw_status] = useState<boolean>(true);
 
     const [sortcreatedon, setsortcreatedon] = useState(false);
+    const [showMineOnly, setShowMineOnly] = useState(false);
 
     const { isRegUser, user } = UserMyAppContext()
 
@@ -376,6 +377,10 @@ const Page = () => {
     }
 
 
+    const visibleEntries = showMineOnly
+        ? currrentMonthEntries.filter(entry => !!user?.email && entry.addedBy?.toLowerCase() === user.email.toLowerCase())
+        : currrentMonthEntries;
+
     const showToast = (message: string) => {
         setNotification_msg(message);
         setShow_notification(true);
@@ -455,8 +460,15 @@ const Page = () => {
 
                     </div>
 
-                    <div className=' flex w-40  justify-center md:justify-end flex-row mt-2 sm:mt-0 '>
-                        <div className='text-sm px-4 py-2 rounded-xl bg-blue-300 shadow-xl hover:bg-blue-400 cursor-pointer  ' onClick={changeformvisibility}>+ Add New</div>
+                    <div className=' flex  justify-center md:justify-end flex-row items-center gap-2 mt-2 sm:mt-0 '>
+                        <div
+                            className={`text-sm px-4 py-2 rounded-xl shadow-xl cursor-pointer whitespace-nowrap ${showMineOnly ? 'bg-blue-400 text-white' : 'bg-white border border-blue-300 hover:bg-blue-100'}`}
+                            onClick={() => setShowMineOnly(!showMineOnly)}
+                            title="Show only entries you submitted"
+                        >
+                            {showMineOnly ? '✓ My Submissions' : 'Show My Submissions only'}
+                        </div>
+                        <div className='text-sm whitespace-nowrap px-4 py-2 rounded-xl bg-blue-300 shadow-xl hover:bg-blue-400 cursor-pointer  ' onClick={changeformvisibility}>+ Add New</div>
                     </div>
 
                 </div>
@@ -476,7 +488,12 @@ const Page = () => {
                         <p className={`w-[5%]  overflow-clip text-sm text-center font-semibold ${isRegUser ? "flex" : "hidden"}`}>WTW Status</p>
                         <p className={`w-[15%]   overflow-clip text-sm text-center font-semibold ${isRegUser ? "" : "hidden"}`}>SM Status</p>
                     </div>
-                    {currrentMonthEntries.map((entry, index) => (
+                    {showMineOnly && visibleEntries.length === 0 && (
+                        <p className='text-sm text-gray-500 text-center py-6'>
+                            {user?.email ? 'You have no submissions this month.' : 'Log in to see your submissions.'}
+                        </p>
+                    )}
+                    {visibleEntries.map((entry, index) => (
                         <div key={index}>
                             {/* computer screen */}
                             <div className={`sm:flex hidden w-full justify-around   ${index % 2 > 0 ? "bg-gray-200" : "bg-white"} rounded-xl p-4 gap-4 items-center`}>
