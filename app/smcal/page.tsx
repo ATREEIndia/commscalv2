@@ -51,6 +51,8 @@ export default function SmCalPage() {
 
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const[isAlert, setIsAlert]=useState(false)
+  const[skipDB, setSkipDB]=useState(false)
+  const [pendingDate, setPendingDate] = useState('');
 
   const { users } = useUsers()
   const isAdmin = users.find((u) => u.email === user?.email)?.role === 'admin'
@@ -75,15 +77,32 @@ export default function SmCalPage() {
   }, [])
 
   const openNewPost = (dateStr = '') => {
+    if(!skipDB){
+      setPendingDate(dateStr)
+      setIsAlert(true) 
+      return;
+    }  
 
-    setIsAlert(true)
 
-
-    return;
+   
     
-    setPrefilledDate(dateStr)
-    setShowNewPost(true)
+    // setPrefilledDate(dateStr)
+    // setShowNewPost(true)
+    // setSkipDB(false)
   }
+
+  useEffect(()=>{
+    if(skipDB){
+      setPrefilledDate(pendingDate)
+    setShowNewPost(true)
+    setSkipDB(false)
+
+    }
+
+  },[pendingDate, skipDB])
+ 
+
+ 
 
   const eligibleTasks = useMemo(
     () =>
@@ -440,8 +459,12 @@ export default function SmCalPage() {
         <p className='text-sm select-none'>Please add to the Database first and assign a person to do the task. Then using the prompted window add to smcal</p>
         <p className='text-xs p-2 bg-amber-200'>This will ensure that the database entry and the smcal entries are connected. </p>
         <div className='flex items-center justify-center gap-5'>
+
+          <div onClick={()=>{setIsAlert(false); setSkipDB(true) }} className='text-blue-500 cursor-pointer text-sm hover:text-blue-800 '>Continue with out Database </div>
           
           <button onClick={()=>  router.push('/database')} className='p-2 rounded-xl bg-white-500 hover:font-semibold bg-blue-100 hover:text-white hover:bg-blue-600 border-2 border-blue-200 cursor-pointer active:scale-90'>Open Database</button>
+
+          
 
         </div>
 
