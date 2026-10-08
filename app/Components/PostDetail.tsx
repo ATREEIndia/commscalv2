@@ -17,7 +17,7 @@ import {
   Timestamp,
   updateDoc,
 } from 'firebase/firestore'
-import { ref, update } from 'firebase/database'
+import { get, ref, update } from 'firebase/database'
 import { db, firestore } from '../firebase/firebase'
 import type { SMPost, SMComment, HistoryEvent, PostActor, AppNotification } from '../smcal/types'
 import { convertDriveUrl, getDriveDownloadUrl } from '../../lib/driveUrl'
@@ -77,9 +77,13 @@ function shareText(post: SMPost, postId: string) {
 
 // Realtime DB mirror of the linked task. Failures are logged, never thrown,
 // so a Realtime DB hiccup doesn't block the Firestore write that preceded it.
+// Tasks created straight from SM Cal have no Database item — skip them rather
+// than creating a partial item.
 async function updateRtdbItem(taskId: string, data: Record<string, unknown>) {
   try {
-    await update(ref(db, `items/${taskId}`), data)
+    const itemRef = ref(db, `items/${taskId}`)
+    if (!(await get(itemRef)).exists()) return
+    await update(itemRef, data)
   } catch (error) {
     console.error(error)
   }

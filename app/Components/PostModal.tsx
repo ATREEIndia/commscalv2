@@ -47,6 +47,8 @@ export default function PostModal({ user, prefilledDate, onClose, taskPrefill }:
 
   // Generate a stable Firestore document ID on first render so uploads can use it
   const [postId] = useState(() => doc(collection(firestore, 'posts')).id)
+  // Posts added without a Database entry get their own task so they show up in My Tasks
+  const [standaloneTaskId] = useState(() => doc(collection(firestore, 'tasks')).id)
 
   const [title, setTitle]         = useState(taskPrefill?.title ?? '')
   const [scheduledAt, setScheduledAt] = useState(defaultDT)
@@ -68,6 +70,25 @@ export default function PostModal({ user, prefilledDate, onClose, taskPrefill }:
     setSubmitting(true)
     try {
       const scheduledDate = dayjs.tz(scheduledAt, IST).toDate()
+      const sourceTaskId = taskPrefill?.taskId || standaloneTaskId
+
+      if (!taskPrefill) {
+        const day = dayjs.tz(scheduledAt, IST).format('YYYY-MM-DD')
+        await setDoc(doc(firestore, 'tasks', standaloneTaskId), {
+          id: standaloneTaskId,
+          title: title.trim(),
+          description: bodyCopy.trim(),
+          url: docUrl.trim(),
+          date: day,
+          deadline: day,
+          createdon: dayjs().tz(IST).format('YYYY-MM-DD'),
+          assigned_to: [assignedTo],
+          completed_by: [],
+          current_status: 'Working',
+          linkedSmPostId: postId,
+        })
+      }
+
       await setDoc(doc(firestore, 'posts', postId), {
         title: title.trim(),
         bodyCopy: bodyCopy.trim(),
@@ -85,7 +106,7 @@ export default function PostModal({ user, prefilledDate, onClose, taskPrefill }:
         approvedBy: [],
         assignedTo,
         assignedToName,
-        ...(taskPrefill ? { sourceTaskId: taskPrefill.taskId } : {}),
+        sourceTaskId,
       })
 
       const actor = {

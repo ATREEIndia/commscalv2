@@ -4,7 +4,7 @@ import { auth, db, firestore } from '../firebase/firebase';
 import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
 import { add, format } from 'date-fns';
 import { onAuthStateChanged } from 'firebase/auth';
-import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { submitToSheet } from '../Posttosheet';
 import { UserMyAppContext } from '../Context/MyAppContext';
 import TagInput from './TagInput';
@@ -290,12 +290,48 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
                 completed_by: [],
                 current_status: sm_status,
 
-            }).then(() => {
+            // merge keeps fields set elsewhere (e.g. linkedSmPostId from SM Cal)
+            }, { merge: true }).then(() => {
                 //console.log('Task added successfully!');
+                syncPostAssignee(assigned_to);
             }
             )
 
         } catch (error) { }
+    }
+
+    // A post has a single assignee, so the first person on the task owns the linked SM Cal post.
+    const syncPostAssignee = async (assigned_to: string[]) => {
+        const postId = selectedEntry?.smPostId;
+        if (!postId) return;
+        try {
+            const postRef = doc(firestore, 'posts', postId);
+            const postSnap = await getDoc(postRef);
+            if (!postSnap.exists()) return;
+
+            const post = postSnap.data();
+            const newEmail = assigned_to[0] || '';
+            if (!newEmail || newEmail === post.assignedTo) return;
+
+            const newName = users.find((u) => u.email === newEmail)?.displayName || newEmail;
+            await updateDoc(postRef, { assignedTo: newEmail, assignedToName: newName });
+
+            const current = auth.currentUser;
+            await addDoc(collection(firestore, 'posts', postId, 'history'), {
+                type: 'assignment_changed',
+                actor: {
+                    uid: current?.uid || '',
+                    name: current?.displayName || 'User',
+                    photoURL: current?.photoURL || '',
+                    email: current?.email || '',
+                },
+                timestamp: serverTimestamp(),
+                before: JSON.stringify({ email: post.assignedTo || '', name: post.assignedToName || '' }),
+                after: JSON.stringify({ email: newEmail, name: newName }),
+            });
+        } catch (error) {
+            console.error('Error syncing post assignee:', error);
+        }
     }
 
     const update_Sheet = (date: string, title: string, current_status: string) => {
