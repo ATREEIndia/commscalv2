@@ -90,6 +90,71 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
     const [tags, setTags] = useState<string[]>(selectedEntry?.tags ?? []);
 
+    // Uploads are limited to the person who added the entry and admins.
+    const canUpload = (!!userEmail && selectedEntry?.addedBy === userEmail) || (isRegUser && role === "admin");
+    const [uploading, setUploading] = useState<'' | 'file' | 'image'>('');
+    const [uploadError, setUploadError] = useState<'' | 'file' | 'image'>('');
+
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, kind: 'file' | 'image') => {
+        const selectedFile = e.target.files?.[0];
+        e.target.value = '';
+        if (!selectedFile || uploading) return;
+        if (kind === 'image' && !selectedFile.type.startsWith("image/")) {
+            alert("Please select an image file");
+            return;
+        }
+
+        setUploading(kind);
+        setUploadError('');
+        try {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append("fileName", selectedFile.name);
+            const response = await fetch('/api/upload', { method: 'POST', body: formData });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "upload failed on server");
+
+            if (kind === 'file') setUrl(data.filelink + "");
+            else setImgUrl(data.filelink + "");
+        } catch (error) {
+            console.log("upload error: " + error);
+            setUploadError(kind);
+        } finally {
+            setUploading('');
+        }
+    }
+
+    const uploadButton = (kind: 'file' | 'image', current: string) => {
+        const id = kind === 'file' ? 'editFileUpload' : 'editImageUpload';
+        const noun = kind === 'file' ? 'file' : 'image';
+        const label = uploading === kind
+            ? `Uploading ${noun}…`
+            : `${current.includes("http") ? "Replace" : "Upload"} ${noun}`;
+        return (
+            <div className='flex flex-col gap-1 p-2'>
+                <div className='flex items-center'>
+                    <label
+                        htmlFor={id}
+                        className={`text-sm text-white px-4 py-2 rounded-lg shadow-md transition ${uploading ? "bg-blue-300 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-700 cursor-pointer"}`}
+                    >
+                        {label}
+                    </label>
+                    <input
+                        id={id}
+                        type="file"
+                        accept={kind === 'file' ? "*/*" : "image/*"}
+                        disabled={!!uploading}
+                        onChange={(e) => handleUpload(e, kind)}
+                        className="hidden"
+                    />
+                </div>
+                {uploadError === kind
+                    ? <span className='text-xs text-red-800'>Upload failed. Upload to the <a className='text-blue-700 underline' href='https://drive.google.com/drive/folders/1YgMS9-em71U_UfSdfydsihLgOggTrUDI' target='_blank'>folder</a> directly and paste the url</span>
+                    : <span className='text-xs text-blue-800'>Max upload size is {kind === 'file' ? 4 : 3} MB. </span>}
+            </div>
+        );
+    }
+
     const tagSuggestions = useMemo(() => buildTagSuggestions(items), [items]);
 
 
@@ -178,7 +243,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
         else {
             setDec_error(false);
         }
-        if (imgUrl.length<1) {
+        if (imgUrl.length<2) {
             setImgurl_error(true);
         }
         else {
@@ -193,7 +258,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
 
 
-        if (date == "" || title == "" || category == "" || (assign_to.length > 0 && Smdeadline == "") || url == "" || imgUrl.length<2 || mentions.length<1) {
+        if (date == "" || title == "" || category == "" || (assign_to.length > 0 && Smdeadline == "") || url == "" || description == "" || imgUrl.length<2 || mentions.length<1) {
             alert("Please fill all the required fields");
             return;
         }
@@ -287,7 +352,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
                 remarks: remarks,
                 id: selectedEntry?.id,
 
-                completed_by: [],
+                // completed_by is left out so editing the entry doesn't wipe who has finished the task
                 current_status: sm_status,
 
             // merge keeps fields set elsewhere (e.g. linkedSmPostId from SM Cal)
@@ -402,9 +467,8 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
         setAssignTo([]);
         setTags([]);
         setDec_error(false)
-        setImgurl_error(false)       
-        setDec_error(false)
-        setDec_error(false)
+        setImgurl_error(false)
+        setmention_error(false)
 
 
     }
@@ -515,9 +579,9 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
     useEffect(() => {
         if (selectedEntry) {
             setDec_error(false)
-        setImgurl_error(false)       
-        setDec_error(false)
-        setDec_error(false)
+            setImgurl_error(false)
+            setmention_error(false)
+            setUploadError('')
 
             //console.log("Selected entry data=");
 
@@ -783,11 +847,13 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
                         <label className='text-sm font-medium text-gray-600 px-2' ><a className={`${url.includes("http") ? "flex" : "hidden"}`} href={url} target="_blank">URL 🔗</a> <p className={`${url.includes("http") ? "hidden" : "flex"}`}>URL</p></label>
                         <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2 border-gray-100  rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
+                        {canUpload && uploadButton('file', url)}
                     </div>
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>Image URL</label>
                         <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2  rounded-xl shadow text-sm ${imgUrl_error?'border-red-300':"border-gray-100"}`} type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
+                        {canUpload && uploadButton('image', imgUrl)}
                     </div>
 
                 </div>
@@ -795,7 +861,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Description</label>
-                    <textarea disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2 border-gray-100 rounded-xl shadow text-sm ${dec_error?'border-red-500':"border-gray-100 "}`} onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
+                    <textarea disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2 rounded-xl shadow text-sm ${dec_error?'border-red-500':"border-gray-100"}`} onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
                 </div>
 
 
@@ -864,7 +930,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
                     <input
                         disabled={!isRegUser && selectedEntry?.addedBy != userEmail}
-                        className={`p-2 border-2  rounded-xl shadow text-sm ${mention_error?'border-gray-300':'border-gray-100'}`}
+                        className={`p-2 border-2  rounded-xl shadow text-sm ${mention_error?'border-red-300':'border-gray-100'}`}
                         type='text'
                         list='mentions'
                         onKeyDown={(e) => {

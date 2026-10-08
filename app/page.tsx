@@ -404,7 +404,8 @@ export default function Home() {
       setUsername(user?.displayName ?? null);
     });
     listenToItems((data: itemprobes[]) => { Setitems(data); setIsLoading(false); });
-    listenToTasks(Settasks);
+    // Skip tasks with no real assignee (e.g. [] or [''] left behind by a deleted post)
+    listenToTasks((data) => Settasks(data.filter((t) => t.assigned_to?.some((p) => p?.trim()))));
     return () => unsubscribe();
   }, []);
 

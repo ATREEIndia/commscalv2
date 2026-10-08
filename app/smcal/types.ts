@@ -99,6 +99,7 @@ export type NotificationType =
   | 'approval_reverted'
   | 'comment_resolved'
   | 'comment_unresolved'
+  | 'post_deleted'
 
 export type NotificationActor = {
   email: string

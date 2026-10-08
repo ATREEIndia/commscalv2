@@ -7,11 +7,14 @@ import {
   arrayUnion,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -557,31 +560,50 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   }
 
   // ── Approve / revoke ─────────────────────────────────────────────────────────
+  // Runs in a transaction on the latest approvedBy/status so concurrent approvals
+  // don't overwrite each other.
   const toggleApprove = async () => {
     if (!user) return
-    if (myApproval) {
-      const newApprovedBy = (post.approvedBy || []).filter((a) => a.uid !== user.uid)
-      const newStatus =
-        newApprovedBy.length === 0 && post.status === 'approved' ? 'draft' : post.status
-      await updateDoc(doc(firestore, 'posts', postId), { approvedBy: newApprovedBy, status: newStatus })
-      await log('approval_reverted')
-      if (newStatus !== post.status) await log('status_changed', post.status, newStatus)
-      await notifyOwners('approval_reverted', `${actor.name} revoked their approval on "${post.title}"`)
-    } else {
+    const postRef = doc(firestore, 'posts', postId)
+    const result = await runTransaction(firestore, async (tx) => {
+      const snap = await tx.get(postRef)
+      if (!snap.exists()) return null
+      const current = snap.data() as SMPost
+      const approvedBy = current.approvedBy || []
+      const prevStatus = current.status
+      const alreadyApproved = approvedBy.some((a) => a.uid === user.uid)
+
+      if (alreadyApproved) {
+        const newApprovedBy = approvedBy.filter((a) => a.uid !== user.uid)
+        // Without any approval the post can't stay approved/scheduled/posted.
+        const newStatus: SMPost['status'] = newApprovedBy.length === 0 ? 'draft' : prevStatus
+        tx.update(postRef, { approvedBy: newApprovedBy, status: newStatus })
+        return { revoked: true, prevStatus, newStatus }
+      }
+
       const approval = {
         uid: user.uid,
         name: user.displayName || 'User',
         photoURL: user.photoURL || '',
         approvedAt: Timestamp.now(),
       }
-      const prevStatus = post.status
-      await updateDoc(doc(firestore, 'posts', postId), {
-        approvedBy: [...(post.approvedBy || []), approval],
-        status: 'approved',
-      })
+      // Only a draft moves forward to approved; never pull scheduled/posted back.
+      const newStatus: SMPost['status'] = prevStatus === 'draft' ? 'approved' : prevStatus
+      tx.update(postRef, { approvedBy: [...approvedBy, approval], status: newStatus })
+      return { revoked: false, prevStatus, newStatus }
+    })
+    if (!result) return
+
+    if (result.revoked) {
+      await log('approval_reverted')
+      await notifyOwners('approval_reverted', `${actor.name} revoked their approval on "${post.title}"`)
+    } else {
       await log('approved')
-      if (prevStatus !== 'approved') await log('status_changed', prevStatus, 'approved')
       await notifyOwners('post_approved', `${actor.name} approved "${post.title}"`)
+    }
+    if (result.newStatus !== result.prevStatus) {
+      await log('status_changed', result.prevStatus, result.newStatus)
+      await syncTaskStatus(result.prevStatus, result.newStatus)
     }
   }
 
@@ -589,10 +611,17 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   const setStatus = async (status: SMPost['status']) => {
     if ((status === 'scheduled' || status === 'posted') && !hasApproval) return
     const prev = post.status
-    await updateDoc(doc(firestore, 'posts', postId), { status })
+    // A post sent back to draft needs to be approved again.
+    await updateDoc(doc(firestore, 'posts', postId), {
+      status,
+      ...(status === 'draft' ? { approvedBy: [] } : {}),
+    })
     await log('status_changed', prev, status)
     await notifyOwners('status_changed', `${actor.name} changed the status of "${post.title}" from ${prev} to ${status}`)
+    await syncTaskStatus(prev, status)
+  }
 
+  const syncTaskStatus = async (prev: SMPost['status'], status: SMPost['status']) => {
     // Bidirectional sync with linked task. A missing task (deleted via the
     // /database cleanup flow) is a clean state, not an error — skip silently.
     if (!post.sourceTaskId) return
@@ -602,18 +631,20 @@ export default function PostDetail({ postId, user, onClose }: Props) {
 
     const task = taskSnap.data()
     const completedBy: string[] = Array.isArray(task.completed_by) ? task.completed_by : []
-    const actorEmail = actor.email??''
+    // Credit both the person who marked it and the assignee, so the task is
+    // complete for the assignee even when someone else posts it.
+    const doneBy = [actor.email, post.assignedTo].filter((e): e is string => !!e)
 
     if (status === 'posted') {
       await updateDoc(taskRef, {
         current_status: 'Posted',
-        completed_by: completedBy.includes(actorEmail) ? completedBy : [...completedBy, actorEmail],
+        completed_by: Array.from(new Set([...completedBy, ...doneBy])),
       })
       await updateRtdbItem(post.sourceTaskId, { sm_status: 'Posted' })
     } else if (prev === 'posted') {
       await updateDoc(taskRef, {
-        current_status: 'In Progress',
-        completed_by: completedBy.filter((e) => e !== actorEmail),
+        current_status: 'Working',
+        completed_by: completedBy.filter((e) => !doneBy.includes(e)),
       })
       await updateRtdbItem(post.sourceTaskId, { sm_status: 'Working' })
     }
@@ -621,11 +652,52 @@ export default function PostDetail({ postId, user, onClose }: Props) {
 
   // ── Delete ───────────────────────────────────────────────────────────────────
   const handleDelete = async () => {
-    await deleteDoc(doc(firestore, 'posts', postId))
-    if (post.sourceTaskId) {
-      await updateDoc(doc(firestore, 'tasks', post.sourceTaskId), { assigned_to: [''] })
-      await updateRtdbItem(post.sourceTaskId, { assigned_to: '', sm_status: 'No Post' })
+    // Firestore doesn't cascade deletes, so clear the subcollections first.
+    // Best effort: a failure here (e.g. security rules) must not block the delete.
+    for (const sub of ['comments', 'history']) {
+      try {
+        const snap = await getDocs(collection(firestore, 'posts', postId, sub))
+        await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)))
+      } catch (error) {
+        console.error(`Error deleting ${sub}:`, error)
+      }
     }
+    await deleteDoc(doc(firestore, 'posts', postId))
+
+    if (post.sourceTaskId) {
+      const taskId = post.sourceTaskId
+      const taskRef = doc(firestore, 'tasks', taskId)
+      const taskSnap = await getDoc(taskRef).catch(() => null)
+
+      if (taskSnap?.data()?.createdFromSmPost) {
+        // Task was created along with this post on SM Cal, so nothing else refers to it.
+        await deleteDoc(taskRef).catch(console.error)
+      } else {
+        if (taskSnap?.exists()) {
+          await updateDoc(taskRef, {
+            assigned_to: [],
+            current_status: 'No Post',
+            linkedSmPostId: deleteField(),
+          }).catch(console.error)
+        }
+        const itemRef = ref(db, `items/${taskId}`)
+        if ((await get(itemRef).catch(() => null))?.exists()) {
+          // null removes smPostId in Realtime DB
+          await update(itemRef, { assigned_to: '', sm_status: 'No Post', smPostId: null }).catch(console.error)
+        }
+      }
+    }
+
+    const adminEmails = users.filter((u) => u.role === 'admin').map((u) => u.email)
+    await notify({
+      recipients: [...ownerRecipients, ...adminEmails],
+      actor: notifyActor,
+      type: 'post_deleted',
+      postId,
+      postTitle: post.title,
+      message: `${actor.name} deleted the post "${post.title}"`,
+    }).catch(console.error)
+
     onClose()
   }
 

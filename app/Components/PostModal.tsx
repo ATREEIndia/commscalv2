@@ -86,6 +86,8 @@ export default function PostModal({ user, prefilledDate, onClose, taskPrefill }:
           completed_by: [],
           current_status: 'Working',
           linkedSmPostId: postId,
+          // Marks the task as owned by this post, so deleting the post deletes it too
+          createdFromSmPost: true,
         })
       }
 
