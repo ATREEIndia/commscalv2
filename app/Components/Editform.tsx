@@ -193,7 +193,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
 
 
-        if (date == "" || title == "" || category == "" || (assign_to.length > 0 && Smdeadline == "") || url == "" || imgUrl.length<2 || mentions.length<2) {
+        if (date == "" || title == "" || category == "" || (assign_to.length > 0 && Smdeadline == "") || url == "" || imgUrl.length<2 || mentions.length<1) {
             alert("Please fill all the required fields");
             return;
         }
