@@ -340,8 +340,9 @@ export default function Home() {
   const [filtered_tasks, Setfiltered_tasks] = useState<taskprobs[]>([]);
   const [itemcategories, Setitemcategories] = useState<string[]>([]);
 
-  const [startDate, setStartDate] = useState(new Date("2025-05-30"));
-  const [endDate, setEndDate] = useState(new Date());
+  // null = no limit on that side (the date input was cleared)
+  const [startDate, setStartDate] = useState<Date | null>(new Date("2025-05-30"));
+  const [endDate, setEndDate] = useState<Date | null>(new Date());
   const [filered_items, Setfileterd_items] = useState<itemprobes[]>([]);
 
   const [iseditformopen, setIseditformopen] = useState(false);
@@ -369,7 +370,7 @@ export default function Home() {
   } | null>(null);
 
   // ─── Helpers ────────────────────────────────────────────────────────────────
-  const formatDate = (date: Date) => date.toISOString().split("T")[0];
+  const formatDate = (date: Date | null) => (date ? date.toISOString().split("T")[0] : "");
 
   const getStatusColor = (task: taskprobs, person: string) =>
     task.completed_by?.includes(person)
@@ -419,8 +420,8 @@ export default function Home() {
     Setfileterd_items(
       items?.filter(
         (item) =>
-          new Date(item.date) >= new Date(startDate) &&
-          new Date(item.date) <= new Date(endDate)
+          (!startDate || new Date(item.date) >= startDate) &&
+          (!endDate || new Date(item.date) <= endDate)
       )
     );
   }, [items, startDate, endDate]);
@@ -638,7 +639,10 @@ export default function Home() {
                     <input
                       type="date"
                       value={formatDate(value)}
-                      onChange={(e) => setter(new Date(e.target.value))}
+                      onChange={(e) => {
+                        const picked = new Date(e.target.value);
+                        setter(isNaN(picked.getTime()) ? null : picked);
+                      }}
                       className="text-sm text-gray-700 bg-transparent outline-none cursor-pointer"
                     />
                   </div>
