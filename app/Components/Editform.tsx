@@ -75,7 +75,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
     const [date_error, setDate_error] = useState<boolean>(false);
     const [categorry_error, setCategory_error] = useState<boolean>(false);
     const [deadline_error, setDeadline_error] = useState<boolean>(false);
-    const [url_error, seturl_error] = useState<boolean>(false);
+    const [dec_error, setDec_error] = useState<boolean>(false);
     const [isshowcopy, setIsshowcopy] = useState<boolean>(false);
 
     const [click, setClick] = useState<boolean>(false);
@@ -170,11 +170,11 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
             alert("Deadline is not valid");
             return;
         }
-        if (url == "") {
-            seturl_error(true);
+        if (description.length<1) {
+            setDec_error(true);
         }
         else {
-            seturl_error(false);
+            setDec_error(false);
         }
 
 
@@ -189,10 +189,10 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
             alert('Please pick a valid category from the dropdown (legacy values are no longer supported)');
             return;
         }
-        if (tags.length < 2) {
-            alert('Please add at least 2 tags');
-            return;
-        }
+        // if (tags.length < 2) {
+        //     alert('Please add at least 2 tags');
+        //     return;
+        // }
         if (tags.length > 5) {
             alert('Maximum 5 tags allowed');
             return;
@@ -725,7 +725,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2' ><a className={`${url.includes("http") ? "flex" : "hidden"}`} href={url} target="_blank">URL 🔗</a> <p className={`${url.includes("http") ? "hidden" : "flex"}`}>URL</p></label>
-                        <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2 ${url_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
+                        <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2 border-gray-100  rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
                     </div>
                     <div className='w-full flex flex-col '>
 
@@ -738,7 +738,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Description</label>
-                    <textarea disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
+                    <textarea disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2 border-gray-100 rounded-xl shadow text-sm ${dec_error?'border-red-500':"border-gray-100 "}`} onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
                 </div>
 
 
