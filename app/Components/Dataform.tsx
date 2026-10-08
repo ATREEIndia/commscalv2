@@ -48,6 +48,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
     const [title_error, setTitle_error] = useState<boolean>(false);
     const [url_error, seturl_error] = useState<boolean>(false);
     const [desc_error, setdesc_error] = useState<boolean>(false);
+    const [mention_error, setmention_error] = useState<boolean>(false);
 
 
 
@@ -61,6 +62,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
     const [uploadlabel_img, setuploadlabel_img] = useState("Upload an image");
     const [uplaodStatus, setUploadStataus] = useState(true)
     const [uplaodStatus_img, setUploadStataus_img] = useState(true)
+    const [imgUrl_error, setImgurl_error] = useState<boolean>(false);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (loading) {
@@ -292,9 +294,21 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
         if(url==""){
             setUrl('No URL')
         }
+          if (imgUrl.length<1) {
+            setImgurl_error(true);
+        }
+        else {
+            setImgurl_error(false);
+        }
+
+        if(mentions.length<1){
+            setmention_error(true)
+        }else{
+            setmention_error(false)
+        }
 
 
-        if (date == "" || title == "" || category == "" || description=="") {
+        if (date == "" || title == "" || category == "" || description=="" || imgUrl.length<2 || mentions.length<1) {
 
             alert("Please fill all the required fields");
             return;
@@ -451,7 +465,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>SM Correction Doc URL</label>
-                    <p className='text-xs px-2 text-blue-700'>For slide breakdown for social media </p>
+                    <p className='text-xs px-2 text-blue-700'>For slide breakdown for social media (optional) </p>
                     <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setSmDoc(e.target.value) }} value={smDoc}></input>
                 </div>
 
@@ -485,7 +499,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>🖼️ Featuring Image URL ( for newsletter)</label>
-                        <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
+                        <input className={`p-2 border-2  rounded-xl shadow text-sm ${imgUrl_error?'border-red-300':"border-gray-100"}`} type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
 
                         <p className='text-xs text-blue-700 px-2'>Max upload size 3 MB. If larger provide the link after uploading to a drive</p>
 
@@ -558,7 +572,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                 </div>
 
                 <div className='w-full flex flex-col py-1 mt-4'>
-                    <label className='text-sm font-medium text-gray-600 px-2'>Mentions / Authors</label>
+                    <label className='text-sm font-medium text-gray-600 px-2'>Mentions / Authors *</label>
                     <span className='text-xs font-medium text-gray-600 px-2'>Use comma(,) or Enter key to add</span>
 
                     {/* <form onSubmit={(e) => {
@@ -600,7 +614,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                     }}>
                         <input
                             name='mentionInput'
-                            className='p-2 border-2 w-full border-gray-100 rounded-xl shadow text-sm'
+                            className={`p-2 border-2 w-full  rounded-xl shadow text-sm ${mention_error?'border-red-300':'border-gray-100'}`}
                             type='text'
                             list='mentions'
                             enterKeyHint='enter'

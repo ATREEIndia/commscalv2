@@ -76,6 +76,8 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
     const [categorry_error, setCategory_error] = useState<boolean>(false);
     const [deadline_error, setDeadline_error] = useState<boolean>(false);
     const [dec_error, setDec_error] = useState<boolean>(false);
+    const [imgUrl_error, setImgurl_error] = useState<boolean>(false);
+     const [mention_error, setmention_error] = useState<boolean>(false);
     const [isshowcopy, setIsshowcopy] = useState<boolean>(false);
 
     const [click, setClick] = useState<boolean>(false);
@@ -176,11 +178,22 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
         else {
             setDec_error(false);
         }
+        if (imgUrl.length<1) {
+            setImgurl_error(true);
+        }
+        else {
+            setImgurl_error(false);
+        }
+         if(mentions.length<1){
+            setmention_error(true)
+        }else{
+            setmention_error(false)
+        }
 
 
 
 
-        if (date == "" || title == "" || category == "" || (assign_to.length > 0 && Smdeadline == "") || url == "") {
+        if (date == "" || title == "" || category == "" || (assign_to.length > 0 && Smdeadline == "") || url == "" || imgUrl.length<2 || mentions.length<2) {
             alert("Please fill all the required fields");
             return;
         }
@@ -352,6 +365,10 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
         setMentions([]);
         setAssignTo([]);
         setTags([]);
+        setDec_error(false)
+        setImgurl_error(false)       
+        setDec_error(false)
+        setDec_error(false)
 
 
     }
@@ -461,6 +478,10 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
     useEffect(() => {
         if (selectedEntry) {
+            setDec_error(false)
+        setImgurl_error(false)       
+        setDec_error(false)
+        setDec_error(false)
 
             //console.log("Selected entry data=");
 
@@ -730,7 +751,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>Image URL</label>
-                        <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
+                        <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2  rounded-xl shadow text-sm ${imgUrl_error?'border-red-300':"border-gray-100"}`} type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
                     </div>
 
                 </div>
@@ -807,7 +828,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
                     <input
                         disabled={!isRegUser && selectedEntry?.addedBy != userEmail}
-                        className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm'
+                        className={`p-2 border-2  rounded-xl shadow text-sm ${mention_error?'border-gray-300':'border-gray-100'}`}
                         type='text'
                         list='mentions'
                         onKeyDown={(e) => {
