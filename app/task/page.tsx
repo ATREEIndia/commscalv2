@@ -65,7 +65,7 @@ const Page = () => {
         const myTasks = tasks.filter(task => task.assigned_to?.includes(useremail) && task.current_status != "No Post");
         setMyTasks(myTasks);
 
-        setMyPendingTasks(myTasks.filter(task => !task.completed_by?.includes(useremail)));
+        setMyPendingTasks(myTasks.filter(task => !task.completed_by?.includes(useremail) && task.current_status!='Posted'));
 
 
         setMyCompletedTasks(myTasks.filter(task => task.completed_by?.includes(useremail)));
