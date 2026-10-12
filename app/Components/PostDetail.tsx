@@ -231,6 +231,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   const [editingDocUrl, setEditingDocUrl] = useState(false)
   const [docUrlDraft, setDocUrlDraft] = useState('')
   const [saving, setSaving] = useState(false)
+  const [approving, setApproving] = useState(false)
 
   // UI
   const [selectedImg, setSelectedImg] = useState<number | null>(null)
@@ -562,7 +563,21 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   // ── Approve / revoke ─────────────────────────────────────────────────────────
   // Runs in a transaction on the latest approvedBy/status so concurrent approvals
   // don't overwrite each other.
+  // The intent (approve vs revoke) is taken from what the user saw when clicking,
+  // and the transaction is a no-op if the post is already in that state. Together
+  // with the `approving` guard this stops rapid clicks from flip-flopping.
   const toggleApprove = async () => {
+    if (!user || approving) return
+    const wantApproved = !myApproval
+    setApproving(true)
+    try {
+      await applyApproval(wantApproved)
+    } finally {
+      setApproving(false)
+    }
+  }
+
+  const applyApproval = async (wantApproved: boolean) => {
     if (!user) return
     const postRef = doc(firestore, 'posts', postId)
     const result = await runTransaction(firestore, async (tx) => {
@@ -572,6 +587,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
       const approvedBy = current.approvedBy || []
       const prevStatus = current.status
       const alreadyApproved = approvedBy.some((a) => a.uid === user.uid)
+      if (alreadyApproved === wantApproved) return null
 
       if (alreadyApproved) {
         const newApprovedBy = approvedBy.filter((a) => a.uid !== user.uid)
@@ -1213,14 +1229,14 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             {/* Approve / revoke — anyone signed in */}
             <button
               onClick={toggleApprove}
-              disabled={!user}
+              disabled={!user || approving}
               className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all
                 ${myApproval
                   ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
                   : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                 } disabled:opacity-40 disabled:cursor-not-allowed`}
             >
-              {myApproval ? '✓ Approved — click to revoke' : 'Approve'}
+              {approving ? 'Saving…' : myApproval ? '✓ Approved — click to revoke' : 'Approve'}
             </button>
 
             {/* Mark as Posted: assignee always; any registered user once approved/posted */}
