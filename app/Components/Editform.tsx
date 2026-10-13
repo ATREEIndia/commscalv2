@@ -77,7 +77,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
     const [deadline_error, setDeadline_error] = useState<boolean>(false);
     const [dec_error, setDec_error] = useState<boolean>(false);
     const [imgUrl_error, setImgurl_error] = useState<boolean>(false);
-     const [mention_error, setmention_error] = useState<boolean>(false);
+    const [mention_error, setmention_error] = useState<boolean>(false);
     const [isshowcopy, setIsshowcopy] = useState<boolean>(false);
 
     const [click, setClick] = useState<boolean>(false);
@@ -237,28 +237,28 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
             alert("Deadline is not valid");
             return;
         }
-        if (description.length<1) {
+        if (description.length < 1) {
             setDec_error(true);
         }
         else {
             setDec_error(false);
         }
-        if (imgUrl.length<2) {
+        if (imgUrl.length < 2) {
             setImgurl_error(true);
         }
         else {
             setImgurl_error(false);
         }
-         if(mentions.length<1){
+        if (mentions.length < 1) {
             setmention_error(true)
-        }else{
+        } else {
             setmention_error(false)
         }
 
 
 
 
-        if (date == "" || title == "" || category == "" || (assign_to.length > 0 && Smdeadline == "") || url == "" || description == "" || imgUrl.length<2 || mentions.length<1) {
+        if (date == "" || title == "" || category == "" || (assign_to.length > 0 && Smdeadline == "") || url == "" || description == "" || imgUrl.length < 2 || mentions.length < 1) {
             alert("Please fill all the required fields");
             return;
         }
@@ -355,7 +355,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
                 // completed_by is left out so editing the entry doesn't wipe who has finished the task
                 current_status: sm_status,
 
-            // merge keeps fields set elsewhere (e.g. linkedSmPostId from SM Cal)
+                // merge keeps fields set elsewhere (e.g. linkedSmPostId from SM Cal)
             }, { merge: true }).then(() => {
                 //console.log('Task added successfully!');
                 syncPostAssignee(assigned_to);
@@ -660,6 +660,23 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
     }
 
+    const formatDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    };
+
+    const today = new Date();
+
+    const minDate = formatDate(
+        new Date(today.getFullYear(), today.getMonth(), 1)
+    );
+
+    const maxDate = formatDate(
+        new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    );
+
 
 
     return (
@@ -697,8 +714,12 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
 
                 <div className='w-full flex flex-col py-1 mt-4'>
-                    <label className='text-sm font-medium text-gray-600 px-2'>Date</label>
-                    <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`  p-2 border-2  ${date_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='date' onChange={(e) => { setDate(e.target.value) }} value={date}></input>
+                    <label className='text-sm font-medium text-gray-600 px-2'>Date of Publication / Event</label>
+                    <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`  p-2 border-2  ${date_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='date'
+                        min={minDate}
+                        max={maxDate}
+
+                        onChange={(e) => { setDate(e.target.value) }} value={date}></input>
                 </div>
 
                 <div className='w-full flex flex-col py-1 mt-4'>
@@ -799,27 +820,27 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Assign to</label>
-                    <input className={`p-2 border-2 border-gray-100 rounded-xl shadow text-sm ${isRegUser && role === "admin" ? "" : "hidden"}`} type='text' list='assign' 
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.currentTarget.value.trim() !== "") {
-                            if (!assign_to.includes(e.currentTarget.value.trim())) {
-                                setAssignTo([...assign_to, e.currentTarget.value.trim()]);
-                                e.currentTarget.value = "";
-                            } else {
-                                e.currentTarget.value = "";
+                    <input className={`p-2 border-2 border-gray-100 rounded-xl shadow text-sm ${isRegUser && role === "admin" ? "" : "hidden"}`} type='text' list='assign'
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && e.currentTarget.value.trim() !== "") {
+                                if (!assign_to.includes(e.currentTarget.value.trim())) {
+                                    setAssignTo([...assign_to, e.currentTarget.value.trim()]);
+                                    e.currentTarget.value = "";
+                                } else {
+                                    e.currentTarget.value = "";
+                                }
                             }
-                        }
-                    }}
+                        }}
 
-                     onBlur={(e) => {
+                        onBlur={(e) => {
                             const value = e.currentTarget.value.trim();
                             if (value !== "" && !assign_to.includes(value)) {
                                 setAssignTo([...assign_to, value]);
                             }
                             e.currentTarget.value = "";
                         }}
-                    
-                    
+
+
                     >
                     </input>
                     <datalist id='assign'>
@@ -852,7 +873,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>Image URL</label>
-                        <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2  rounded-xl shadow text-sm ${imgUrl_error?'border-red-300':"border-gray-100"}`} type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
+                        <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2  rounded-xl shadow text-sm ${imgUrl_error ? 'border-red-300' : "border-gray-100"}`} type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
                         {canUpload && uploadButton('image', imgUrl)}
                     </div>
 
@@ -861,7 +882,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Description</label>
-                    <textarea disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2 rounded-xl shadow text-sm ${dec_error?'border-red-500':"border-gray-100"}`} onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
+                    <textarea disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2 rounded-xl shadow text-sm ${dec_error ? 'border-red-500' : "border-gray-100"}`} onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
                 </div>
 
 
@@ -930,7 +951,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
                     <input
                         disabled={!isRegUser && selectedEntry?.addedBy != userEmail}
-                        className={`p-2 border-2  rounded-xl shadow text-sm ${mention_error?'border-red-300':'border-gray-100'}`}
+                        className={`p-2 border-2  rounded-xl shadow text-sm ${mention_error ? 'border-red-300' : 'border-gray-100'}`}
                         type='text'
                         list='mentions'
                         onKeyDown={(e) => {

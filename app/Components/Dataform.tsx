@@ -283,32 +283,32 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
         else {
             setCategory_error(false);
         }
-        if (description.length<1) {
-             setdesc_error(true);
-           
+        if (description.length < 1) {
+            setdesc_error(true);
+
         }
         else {
             setdesc_error(false);
         }
 
-        if(url==""){
+        if (url == "") {
             setUrl('No URL')
         }
-          if (imgUrl.length<1) {
+        if (imgUrl.length < 1) {
             setImgurl_error(true);
         }
         else {
             setImgurl_error(false);
         }
 
-        if(mentions.length<1){
+        if (mentions.length < 1) {
             setmention_error(true)
-        }else{
+        } else {
             setmention_error(false)
         }
 
 
-        if (date == "" || title == "" || category == "" || description=="" || imgUrl.length<2 || mentions.length<1) {
+        if (date == "" || title == "" || category == "" || description == "" || imgUrl.length < 2 || mentions.length < 1) {
 
             alert("Please fill all the required fields");
             return;
@@ -442,6 +442,23 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
 
     }
 
+    const formatDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    };
+
+    const today = new Date();
+
+    const minDate = formatDate(
+        new Date(today.getFullYear(), today.getMonth(), 1)
+    );
+
+    const maxDate = formatDate(
+        new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    );
+
 
 
 
@@ -454,8 +471,12 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                 <h1 className='w-full text-xl font-semibold text-gray-700'>Add New Item</h1>
 
                 <div className='w-full flex flex-col py-1 mt-4'>
-                    <label className='text-sm font-medium text-gray-600 px-2'>Date *</label>
-                    <input className={`p-2 border-2 ${date_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='date' onChange={(e) => { setDate(e.target.value) }} value={date}></input>
+                    <label className='text-sm font-medium text-gray-600 px-2'>Date of Publication / Event*</label>
+                    <p className='text-xs px-2 text-blue-600'>Add today for Announcements / upcoming events and mention in the description</p>
+                    <input className={`p-2 border-2 ${date_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='date'
+                        min={minDate}
+                        max={maxDate}
+                        onChange={(e) => { setDate(e.target.value) }} value={date}></input>
                 </div>
 
                 <div className='w-full flex flex-col py-1 mt-4'>
@@ -499,7 +520,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>🖼️ Featuring Image URL ( for newsletter)</label>
-                        <input className={`p-2 border-2  rounded-xl shadow text-sm ${imgUrl_error?'border-red-300':"border-gray-100"}`} type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
+                        <input className={`p-2 border-2  rounded-xl shadow text-sm ${imgUrl_error ? 'border-red-300' : "border-gray-100"}`} type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
 
                         <p className='text-xs text-blue-700 px-2'>Max upload size 3 MB. If larger provide the link after uploading to a drive</p>
 
@@ -526,7 +547,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Description*</label>
-                    <textarea className={`p-2 border-2 ${desc_error?'border-red-200':'border-gray-100'} rounded-xl shadow text-sm`} onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
+                    <textarea className={`p-2 border-2 ${desc_error ? 'border-red-200' : 'border-gray-100'} rounded-xl shadow text-sm`} onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
                 </div>
 
 
@@ -561,7 +582,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                 </div>
 
                 <div className='w-full flex flex-col py-1 mt-4'>
-                    <label className='text-sm font-medium text-gray-600 px-2'>Tags </label>
+                    <label className='text-sm font-medium text-gray-600 px-2'>Tags (optional) </label>
                     <TagInput
                         value={tags}
                         onChange={setTags}
@@ -614,7 +635,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                     }}>
                         <input
                             name='mentionInput'
-                            className={`p-2 border-2 w-full  rounded-xl shadow text-sm ${mention_error?'border-red-300':'border-gray-100'}`}
+                            className={`p-2 border-2 w-full  rounded-xl shadow text-sm ${mention_error ? 'border-red-300' : 'border-gray-100'}`}
                             type='text'
                             list='mentions'
                             enterKeyHint='enter'
