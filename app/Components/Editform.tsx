@@ -917,7 +917,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
                         </datalist>
                     </div>
 
-                </div>
+                </div> 
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Tags</label>

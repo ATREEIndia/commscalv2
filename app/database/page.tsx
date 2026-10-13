@@ -14,7 +14,14 @@ import Editform from '../Components/Editform';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { UserMyAppContext } from '../Context/MyAppContext';
+import { Calendar1, CalendarArrowDownIcon, CalendarArrowUpIcon, CalendarCheck, Database } from 'lucide-react';
 
+
+// When an entry was added: addedAt (ms) for newer entries, createdon (YYYY-MM-DD) for older ones.
+const addedDate = (entry: itemprobes): Date | null => {
+    const d = entry.addedAt ? new Date(entry.addedAt) : entry.createdon ? new Date(entry.createdon) : null;
+    return d && !isNaN(d.getTime()) ? d : null;
+}
 
 const Page = () => {
     const [entries, setEntries] = useState<itemprobes[]>([])
@@ -31,6 +38,8 @@ const Page = () => {
 
     const [sortcreatedon, setsortcreatedon] = useState(false);
     const [showMineOnly, setShowMineOnly] = useState(false);
+    // 'date' = entries whose date falls in the month, 'added' = entries added during the month
+    const [monthBy, setMonthBy] = useState<'date' | 'added'>('date');
 
     const { isRegUser, user } = UserMyAppContext()
 
@@ -75,7 +84,10 @@ const Page = () => {
     useEffect(() => {
         const itemList: itemprobes[] = [];
         entries.forEach((entry) => {
-            const entrydate = new Date(entry.date);
+            const entrydate = monthBy === 'added' ? addedDate(entry) : new Date(entry.date);
+            if (!entrydate) {
+                return;
+            }
             if (entrydate.getMonth() !== currentDate.getMonth()) {
                 return;
             }
@@ -85,9 +97,13 @@ const Page = () => {
             itemList.push(entry);
 
         });
+        if (monthBy === 'added') {
+            // newest additions first
+            itemList.sort((a, b) => (addedDate(b)?.getTime() ?? 0) - (addedDate(a)?.getTime() ?? 0));
+        }
         setCurrentMonthEntries(itemList);
 
-    }, [currentMonth, entries])
+    }, [currentMonth, entries, monthBy])
 
 
 
@@ -438,7 +454,7 @@ const Page = () => {
             <div className="flex sm:flex-2 sm:w-[70%] w-full md:p-2 -center  flex-col relative p-2 px-4" >
                 {/* add new button */}
                 <div className='w-full  mt-4 z-10 absolute top-0 right-0 align-middle  flex  flex-col md:flex-row items-center justify-center gap-0  '>
-                    
+
                     <div className='flex w-full px-4  '>
                         <button
                             className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -461,6 +477,18 @@ const Page = () => {
                     </div>
 
                     <div className=' flex  justify-center md:justify-end flex-row items-center gap-2 mt-2 sm:mt-0 '>
+                         <div className=' lg:hidden  flex text-sm rounded-xl border border-blue-300 overflow-hidden shadow-xl whitespace-nowrap' title="Show entries by their date, or by when they were added">
+                            {([['date', <Calendar1 size={10}/>], ['added', <CalendarArrowUpIcon size={10} />]] as const).map(([value, label]) => (
+                                <div
+                                    key={value}
+                                    className={`px-3 py-2 cursor-pointer ${monthBy === value ? 'bg-blue-400 text-white' : 'bg-white hover:bg-blue-100'}`}
+                                    onClick={() => setMonthBy(value)}
+                                >
+                                    {label}
+                                </div>
+                            ))}
+                        </div>
+                       
                         <div
                             className={`text-sm px-4 py-2 rounded-xl shadow-xl cursor-pointer whitespace-nowrap ${showMineOnly ? 'bg-blue-400 text-white' : 'bg-white border border-blue-300 hover:bg-blue-100'}`}
                             onClick={() => setShowMineOnly(!showMineOnly)}
@@ -477,8 +505,19 @@ const Page = () => {
 
                     <div className={`sm:flex  hidden w-full  p-4 gap-4 items-center bg-blue-200 justify-around sticky top-0 z-10 rounded-xl `}>
                         <div>
-                            <h1 className='text-sm  align-middle text-cente cursor-pointer font-semibold w-[8%]' onClick={() => { sortdata() }}>Date </h1>
-                            <h1 className='text-xs  align-middle text-cente cursor-pointer text-gray-400 ' onClick={() => { sortdata() }}> {sortcreatedon ? '\n created on' : ''}</h1>
+                            
+                             <div className='flex text-sm rounded-xl border border-blue-300 overflow-hidden shadow-xl whitespace-nowrap' title="Show entries by their date, or by when they were added">
+                            {([['date', 'By date'], ['added', 'By Sumbmitted']] as const).map(([value, label]) => (
+                                <div
+                                    key={value}
+                                    className={`px-3 py-2 cursor-pointer ${monthBy === value ? 'bg-blue-400 text-white' : 'bg-white hover:bg-blue-100'}`}
+                                    onClick={() => setMonthBy(value)}
+                                >
+                                    {label}
+                                </div>
+                            ))}
+                        </div>
+                           
 
                         </div>
 
@@ -497,7 +536,12 @@ const Page = () => {
                         <div key={index}>
                             {/* computer screen */}
                             <div className={`sm:flex hidden w-full justify-around   ${index % 2 > 0 ? "bg-gray-200" : "bg-white"} rounded-xl p-4 gap-4 items-center`}>
-                                <h1 className='text-sm text-left align-middle justify-start w-[8%]'>{format(new Date(entry.date), 'dd MMM')}</h1>
+                                <div className='text-sm text-left align-middle justify-start w-[8%]'>
+                                    <h1>{format(new Date(entry.date), monthBy === 'added' ? 'dd MMM yy' : 'dd MMM')}</h1>
+                                    {monthBy === 'added' && addedDate(entry) && (
+                                        <p className='text-[10px] text-gray-500'>added {format(addedDate(entry)!, 'dd MMM')}</p>
+                                    )}
+                                </div>
 
                                 <h1 className={`text-sm ${entry.sm_status === "Posted" ? "bg-green-200" : entry.sm_status === "Working" ? "bg-orange-200" : entry.sm_status === "No Post" ? "bg-red-200" : entry.sm_status === "Pending Breakdown" ? "bg-yellow-200" : "bg-white"}  rounded-xl p-2 text-left align-middle justify-start w-[15%]`}>{entry.category}</h1>
 
@@ -575,7 +619,10 @@ const Page = () => {
 
                                 <div className='text-[10px] flex justify-between gap-5'>
                                     <h1 className={` ${entry.sm_status === "Posted" ? "bg-green-200" : entry.sm_status === "Working" ? "bg-orange-200" : entry.sm_status === "No Post" ? "bg-red-200" : entry.sm_status === "Pending Breakdown" ? "bg-yellow-200" : "bg-white"}  rounded-xl p-2 text-left align-middle justify-start `}>{entry.category}</h1>
-                                    <h1 className='p-2'>{format(new Date(entry.date), 'dd MMM')}</h1>
+                                    <h1 className='p-2'>
+                                        {format(new Date(entry.date), monthBy === 'added' ? 'dd MMM yy' : 'dd MMM')}
+                                        {monthBy === 'added' && addedDate(entry) && ` · added ${format(addedDate(entry)!, 'dd MMM')}`}
+                                    </h1>
 
                                 </div>
                                 <div className='text-[12px]'>{entry.title}</div>
