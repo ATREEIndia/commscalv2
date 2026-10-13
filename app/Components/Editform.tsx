@@ -673,9 +673,10 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
         new Date(today.getFullYear(), today.getMonth(), 1)
     );
 
-    const maxDate = formatDate(
-        new Date(today.getFullYear(), today.getMonth() + 1, 0)
-    );
+    // const maxDate = formatDate(
+    //     new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    // );
+    const maxDate = formatDate(new Date());
 
 
 
@@ -716,7 +717,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Date of Publication / Event</label>
                     <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`  p-2 border-2  ${date_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='date'
-                        min={minDate}
+                       
                         max={maxDate}
 
                         onChange={(e) => { setDate(e.target.value) }} value={date}></input>

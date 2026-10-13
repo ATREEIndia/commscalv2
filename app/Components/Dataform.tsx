@@ -455,9 +455,11 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
         new Date(today.getFullYear(), today.getMonth(), 1)
     );
 
-    const maxDate = formatDate(
-        new Date(today.getFullYear(), today.getMonth() + 1, 0)
-    );
+    // const maxDate = formatDate(
+    //     new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    // );
+    const maxDate = formatDate(new Date());
+
 
 
 
@@ -474,7 +476,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                     <label className='text-sm font-medium text-gray-600 px-2'>Date of Publication / Event*</label>
                     <p className='text-xs px-2 text-blue-600'>Select today for Announcements / upcoming events and mention date in the description</p>
                     <input className={`p-2 border-2 ${date_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='date'
-                        min={minDate}
+                        
                         max={maxDate}
                         onChange={(e) => { setDate(e.target.value) }} value={date}></input>
                 </div>
