@@ -20,7 +20,7 @@ import {
   Timestamp,
   updateDoc,
 } from 'firebase/firestore'
-import { get, ref, update } from 'firebase/database'
+import { equalTo, get, orderByChild, query as rtdbQuery, ref, update } from 'firebase/database'
 import { db, firestore } from '../firebase/firebase'
 import type { SMPost, SMComment, HistoryEvent, PostActor, AppNotification } from '../smcal/types'
 import { convertDriveUrl, getDriveDownloadUrl } from '../../lib/driveUrl'
@@ -84,12 +84,27 @@ function shareText(post: SMPost, postId: string) {
 // than creating a partial item.
 async function updateRtdbItem(taskId: string, data: Record<string, unknown>) {
   try {
-    const itemRef = ref(db, `items/${taskId}`)
-    if (!(await get(itemRef)).exists()) return
+    const itemRef = await findRtdbItemRef(taskId)
+    if (!itemRef) return
     await update(itemRef, data)
   } catch (error) {
     console.error(error)
   }
+}
+
+// Finds the Database item for a task. Most tasks share the item's key; older
+// tasks were keyed by title, so fall back to looking the item up by title.
+async function findRtdbItemRef(taskId: string, title?: string) {
+  const byId = ref(db, `items/${taskId}`)
+  if ((await get(byId)).exists()) return byId
+  if (!title) return null
+  const snap = await get(rtdbQuery(ref(db, 'items'), orderByChild('title'), equalTo(title)))
+  let key: string | null = null
+  snap.forEach((child) => {
+    key = child.key
+    return true
+  })
+  return key ? ref(db, `items/${key}`) : null
 }
 
 // ── Media grid item ────────────────────────────────────────────────────────────
@@ -232,6 +247,8 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   const [docUrlDraft, setDocUrlDraft] = useState('')
   const [saving, setSaving] = useState(false)
   const [approving, setApproving] = useState(false)
+  const [statusSaving, setStatusSaving] = useState<SMPost['status'] | null>(null)
+  const [statusError, setStatusError] = useState('')
 
   // UI
   const [selectedImg, setSelectedImg] = useState<number | null>(null)
@@ -621,28 +638,49 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     }
     if (result.newStatus !== result.prevStatus) {
       await log('status_changed', result.prevStatus, result.newStatus)
-      await syncTaskStatus(result.prevStatus, result.newStatus)
+      await syncTaskStatus(result.prevStatus, result.newStatus).catch(console.error)
     }
   }
 
   // ── Status change ────────────────────────────────────────────────────────────
+  // The linked task and Database item are updated first; the post's status only
+  // changes (and the UI only shows it) once both have succeeded.
   const setStatus = async (status: SMPost['status']) => {
+    if (statusSaving) return
     if ((status === 'scheduled' || status === 'posted') && !hasApproval) return
     const prev = post.status
-    // A post sent back to draft needs to be approved again.
-    await updateDoc(doc(firestore, 'posts', postId), {
-      status,
-      ...(status === 'draft' ? { approvedBy: [] } : {}),
-    })
-    await log('status_changed', prev, status)
-    await notifyOwners('status_changed', `${actor.name} changed the status of "${post.title}" from ${prev} to ${status}`)
-    await syncTaskStatus(prev, status)
+    setStatusSaving(status)
+    setStatusError('')
+    let linkedUpdated = false
+    try {
+      await syncTaskStatus(prev, status)
+      linkedUpdated = true
+      // A post sent back to draft needs to be approved again.
+      await updateDoc(doc(firestore, 'posts', postId), {
+        status,
+        ...(status === 'draft' ? { approvedBy: [] } : {}),
+      })
+    } catch (error) {
+      console.error('Status change failed:', error)
+      // Post update failed after the task/Database changed: put them back.
+      if (linkedUpdated) await syncTaskStatus(status, prev).catch(console.error)
+      setStatusError(`Couldn't change the status to ${STATUS_CFG[status]?.label ?? status}. Nothing was changed. Please try again.`)
+      return
+    } finally {
+      setStatusSaving(null)
+    }
+
+    // Log and notifications are best effort; the status change itself is done.
+    await log('status_changed', prev, status).catch(console.error)
+    await notifyOwners('status_changed', `${actor.name} changed the status of "${post.title}" from ${prev} to ${status}`).catch(console.error)
   }
 
+  // Syncs the linked task and Database item when a post moves to or from posted.
+  // Throws if a write fails. A missing task (deleted via the /database cleanup
+  // flow) or a task without a Database item is a clean state — skipped.
   const syncTaskStatus = async (prev: SMPost['status'], status: SMPost['status']) => {
-    // Bidirectional sync with linked task. A missing task (deleted via the
-    // /database cleanup flow) is a clean state, not an error — skip silently.
     if (!post.sourceTaskId) return
+    if (status !== 'posted' && prev !== 'posted') return
     const taskRef = doc(firestore, 'tasks', post.sourceTaskId)
     const taskSnap = await getDoc(taskRef)
     if (!taskSnap.exists()) return
@@ -652,19 +690,20 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     // Credit both the person who marked it and the assignee, so the task is
     // complete for the assignee even when someone else posts it.
     const doneBy = [actor.email, post.assignedTo].filter((e): e is string => !!e)
+    const itemRef = await findRtdbItemRef(post.sourceTaskId, task.title || post.title)
 
     if (status === 'posted') {
       await updateDoc(taskRef, {
         current_status: 'Posted',
         completed_by: Array.from(new Set([...completedBy, ...doneBy])),
       })
-      await updateRtdbItem(post.sourceTaskId, { sm_status: 'Posted' })
-    } else if (prev === 'posted') {
+      if (itemRef) await update(itemRef, { sm_status: 'Posted' })
+    } else {
       await updateDoc(taskRef, {
         current_status: 'Working',
         completed_by: completedBy.filter((e) => !doneBy.includes(e)),
       })
-      await updateRtdbItem(post.sourceTaskId, { sm_status: 'Working' })
+      if (itemRef) await update(itemRef, { sm_status: 'Working' })
     }
   }
 
@@ -1245,12 +1284,12 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             {canChangeStatus && post.status !== 'posted' && (
               <button
                 onClick={() => setStatus('posted')}
-                disabled={!hasApproval}
+                disabled={!hasApproval || !!statusSaving}
                 title={!hasApproval ? 'Requires at least one approval' : undefined}
                 className="px-4 py-2 rounded-xl text-sm font-medium border bg-green-50 text-green-700 border-green-200
                   hover:bg-green-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-green-50"
               >
-                Mark as Posted
+                {statusSaving === 'posted' ? 'Updating…' : 'Mark as Posted'}
               </button>
             )}
 
@@ -1258,13 +1297,19 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             {canChangeStatus && post.status !== 'scheduled' && (
               <button
                 onClick={() => setStatus('scheduled')}
-                disabled={!hasApproval}
+                disabled={!hasApproval || !!statusSaving}
                 title={!hasApproval ? 'Requires at least one approval' : undefined}
                 className="px-4 py-2 rounded-xl text-sm font-medium border bg-purple-50 text-purple-700 border-purple-200
                   hover:bg-purple-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-purple-50"
               >
-                Set to Scheduled
+                {statusSaving === 'scheduled' ? 'Updating…' : 'Set to Scheduled'}
               </button>
+            )}
+
+            {statusError && (
+              <p className="w-full text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mt-1">
+                {statusError}
+              </p>
             )}
 
             {canChangeStatus && !hasApproval && (
@@ -1279,9 +1324,10 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                 {post.status !== 'draft' && (
                   <button
                     onClick={() => setStatus('draft')}
-                    className="px-4 py-2 rounded-xl text-sm font-medium border bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 transition-all"
+                    disabled={!!statusSaving}
+                    className="px-4 py-2 rounded-xl text-sm font-medium border bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    Revert to Draft
+                    {statusSaving === 'draft' ? 'Updating…' : 'Revert to Draft'}
                   </button>
                 )}
                 <button
