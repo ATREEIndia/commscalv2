@@ -8,6 +8,7 @@ import { addDoc, collection, deleteDoc, doc, getDoc, serverTimestamp, setDoc, up
 import { submitToSheet } from '../Posttosheet';
 import { UserMyAppContext } from '../Context/MyAppContext';
 import TagInput from './TagInput';
+import ImageCropModal from './ImageCropModal';
 
 type Props = {
 
@@ -94,16 +95,26 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
     const canUpload = (!!userEmail && selectedEntry?.addedBy === userEmail) || (isRegUser && role === "admin");
     const [uploading, setUploading] = useState<'' | 'file' | 'image'>('');
     const [uploadError, setUploadError] = useState<'' | 'file' | 'image'>('');
+    const [cropFile, setCropFile] = useState<File | null>(null);
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, kind: 'file' | 'image') => {
         const selectedFile = e.target.files?.[0];
         e.target.value = '';
         if (!selectedFile || uploading) return;
-        if (kind === 'image' && !selectedFile.type.startsWith("image/")) {
-            alert("Please select an image file");
+        if (kind === 'image') {
+            if (!selectedFile.type.startsWith("image/")) {
+                alert("Please select an image file");
+                return;
+            }
+            // Offer a 16:9 crop first; the upload runs from the crop dialog.
+            setCropFile(selectedFile);
             return;
         }
+        await uploadSelected(selectedFile, kind);
+    }
 
+    const uploadSelected = async (selectedFile: File, kind: 'file' | 'image') => {
+        setCropFile(null);
         setUploading(kind);
         setUploadError('');
         try {
@@ -876,6 +887,14 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
                         <label className='text-sm font-medium text-gray-600 px-2'>Image URL</label>
                         <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2  rounded-xl shadow text-sm ${imgUrl_error ? 'border-red-300' : "border-gray-100"}`} type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
                         {canUpload && uploadButton('image', imgUrl)}
+                        {cropFile && (
+                            <ImageCropModal
+                                file={cropFile}
+                                onCrop={(f) => uploadSelected(f, 'image')}
+                                onUseOriginal={(f) => uploadSelected(f, 'image')}
+                                onCancel={() => setCropFile(null)}
+                            />
+                        )}
                     </div>
 
                 </div>

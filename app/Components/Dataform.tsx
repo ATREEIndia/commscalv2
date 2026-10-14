@@ -7,6 +7,7 @@ import { add } from 'date-fns';
 import { doc, setDoc } from 'firebase/firestore';
 import { submitToSheet } from '../Posttosheet';
 import TagInput from './TagInput';
+import ImageCropModal from './ImageCropModal';
 
 
 interface UploadResponse {
@@ -63,6 +64,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
     const [uplaodStatus, setUploadStataus] = useState(true)
     const [uplaodStatus_img, setUploadStataus_img] = useState(true)
     const [imgUrl_error, setImgurl_error] = useState<boolean>(false);
+    const [cropFile, setCropFile] = useState<File | null>(null);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (loading) {
@@ -136,6 +138,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
 
 
         const selecetedFile = e.target.files?.[0]
+        e.target.value = ""
 
         if (!selecetedFile) {
             alert("No file selecetd")
@@ -143,9 +146,15 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
         }
         if (!selecetedFile.type.startsWith("image/")) {
             alert("Please select an image file")
-            e.target.value = ""
             return
         }
+
+        // Offer a 16:9 crop first; the upload runs from the crop dialog.
+        setCropFile(selecetedFile)
+    }
+
+    const uploadImage = async (selecetedFile: File) => {
+        setCropFile(null)
 
         //check file selected
         setUploadStataus_img(true)
@@ -177,8 +186,6 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
 
             console.log(data.filelink)
             setImgUrl(data.filelink + "")
-
-            e.target.value = ''
 
         } catch (error) {
             console.log("upload error: " + error)
@@ -542,6 +549,14 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                                 className="text-sm bg-blue-200 text-center rounded-xl shadow-xl p-2 hidden "
                             />
                         </div>
+                        {cropFile && (
+                            <ImageCropModal
+                                file={cropFile}
+                                onCrop={uploadImage}
+                                onUseOriginal={uploadImage}
+                                onCancel={() => setCropFile(null)}
+                            />
+                        )}
                     </div>
 
                 </div>
