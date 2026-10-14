@@ -2,6 +2,7 @@
 import { itemprobes, taskprobs } from "./constants";
 import Navbar from "./Components/Navbar";
 import Rightcontainer from "./Components/Rightcontainer";
+import HomeInstrucations from "./Components/HomeInstrucations";
 import { auth, firestore, listenToItems, listenToTasks } from "./firebase/firebase";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
@@ -935,6 +936,8 @@ export default function Home() {
                 )}
               </div>
             </section>}
+
+          <HomeInstrucations />
 
         </div>
       </div>
