@@ -330,8 +330,10 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   const cfg = STATUS_CFG[post.status] ?? STATUS_CFG.draft
   const myApproval = (post.approvedBy || []).find((a) => a.uid === user?.uid)
   const hasApproval = (post.approvedBy?.length ?? 0) > 0
+  // Assignee always; any registered user once the post has left draft
+  // (approved, scheduled or posted).
   const canChangeStatus =
-    !!user && isRegUser && (isAssignee || post.status === 'approved' || post.status === 'posted')
+    !!user && isRegUser && (isAssignee || post.status !== 'draft')
 
   const actor: PostActor = {
     uid: user?.uid || '',
@@ -1239,7 +1241,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
               {approving ? 'Saving…' : myApproval ? '✓ Approved — click to revoke' : 'Approve'}
             </button>
 
-            {/* Mark as Posted: assignee always; any registered user once approved/posted */}
+            {/* Mark as Posted: assignee always; any registered user once out of draft */}
             {canChangeStatus && post.status !== 'posted' && (
               <button
                 onClick={() => setStatus('posted')}
