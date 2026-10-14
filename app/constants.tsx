@@ -3,7 +3,7 @@ import { collection, getDocs } from "firebase/firestore"
 import { firestore } from "./firebase/firebase"
 import { use, useCallback, useEffect, useState } from "react"
 import type { IconType } from "react-icons"
-import { FaInstagram, FaRegFileExcel, FaReceipt, FaDatabase, FaCalendarAlt, FaTasks, FaFlipboard } from "react-icons/fa"
+import { FaInstagram, FaRegFileExcel, FaReceipt, FaDatabase, FaCalendarAlt, FaTasks, FaFlipboard, FaRegNewspaper } from "react-icons/fa"
 
 
 
@@ -25,6 +25,8 @@ export const nav_items: NavItem[] = [
   { name: "InstaLinks", href: "/instalinks", icon: "", reactIcon: FaInstagram, no_reg: false },
   { name: "My Data", href: "/myData", icon: "", reactIcon: FaReceipt, no_reg: true },
   { name: "Google sheet", href: "https://docs.google.com/spreadsheets/d/18I8QnxgKxle1-pA6Cw9_VEa6hnTk_nzAApl_IV194hc/edit?", reactIcon: FaRegFileExcel, icon: "/gs.png", no_reg: false },
+
+  // { name: "Generate WTW", href: "/genwtw", icon: "", reactIcon: FaRegNewspaper, no_reg: false },
 ]
 
 export type taskprobs = {

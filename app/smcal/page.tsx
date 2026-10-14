@@ -15,6 +15,7 @@ import { useEnvDays } from '../hooks/useEnvDays'
 import type { SMPost } from './types'
 import { useRouter } from 'next/navigation'
 import { Divide, X } from 'lucide-react'
+import { stripFormatting } from '../../lib/richText'
 
 
 
@@ -138,7 +139,8 @@ export default function SmCalPage() {
     setTaskPrefillForNewPost({
       taskId: task.id || '',
       title: task.title || '',
-      bodyCopy: `${task.description}\n${task.url}` || '',
+      // Social media copy can't show bold/italic, so drop the markers.
+      bodyCopy: `${stripFormatting(task.description)}\n${task.url}` || '',
       assignedTo: firstAssignee,
       docUrl: task.url || "",
       assignedToName: assignedUser?.displayName || firstAssignee,

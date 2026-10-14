@@ -6,6 +6,7 @@ import { add } from 'date-fns';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
+import FormattedTextarea from './FormattedTextarea';
 
 type Props = {
 
@@ -295,7 +296,7 @@ const Taskform = ({ changeformvisibility, selectedEntry }: Props) => {
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Description</label>
-                    <textarea className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
+                    <FormattedTextarea className='w-full p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={setDescription} value={description} />
                 </div>
 
 

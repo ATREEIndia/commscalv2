@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { doc, setDoc } from "firebase/firestore";
 import Taskform from "./Components/Taskform";
 import Viewdata from "./Components/Viewdata";
+import { renderFormatted } from "../lib/richText";
 import { UserMyAppContext } from "./Context/MyAppContext";
 
 // ─── Popup component for Overview Items ───────────────────────────────────────
@@ -106,7 +107,7 @@ function ItemsPopup({
                   {/* Description if any */}
                   {item.description && (
                     <p className="text-xs text-gray-500 mt-1.5 line-clamp-2">
-                      {item.description}
+                      {renderFormatted(item.description)}
                     </p>
                   )}
                 </div>
@@ -872,7 +873,7 @@ export default function Home() {
                           </div>
 
                           {task.description && (
-                            <p className="text-xs sm:text-sm text-gray-500 mb-2 line-clamp-1">{task.description}</p>
+                            <p className="text-xs sm:text-sm text-gray-500 mb-2 line-clamp-1">{renderFormatted(task.description)}</p>
                           )}
 
                           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">

@@ -14,14 +14,9 @@ import Editform from '../Components/Editform';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { UserMyAppContext } from '../Context/MyAppContext';
+import { addedDate } from '../../lib/items';
 import { Calendar1, CalendarArrowDownIcon, CalendarArrowUpIcon, CalendarCheck, Database } from 'lucide-react';
 
-
-// When an entry was added: addedAt (ms) for newer entries, createdon (YYYY-MM-DD) for older ones.
-const addedDate = (entry: itemprobes): Date | null => {
-    const d = entry.addedAt ? new Date(entry.addedAt) : entry.createdon ? new Date(entry.createdon) : null;
-    return d && !isNaN(d.getTime()) ? d : null;
-}
 
 const Page = () => {
     const [entries, setEntries] = useState<itemprobes[]>([])

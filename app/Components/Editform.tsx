@@ -9,6 +9,7 @@ import { submitToSheet } from '../Posttosheet';
 import { UserMyAppContext } from '../Context/MyAppContext';
 import TagInput from './TagInput';
 import ImageCropModal from './ImageCropModal';
+import FormattedTextarea from './FormattedTextarea';
 
 type Props = {
 
@@ -902,7 +903,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Description</label>
-                    <textarea disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2 rounded-xl shadow text-sm ${dec_error ? 'border-red-500' : "border-gray-100"}`} onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
+                    <FormattedTextarea disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`w-full p-2 border-2 rounded-xl shadow text-sm ${dec_error ? 'border-red-500' : "border-gray-100"}`} onChange={setDescription} value={description} />
                 </div>
 
 

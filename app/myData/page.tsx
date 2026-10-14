@@ -695,6 +695,7 @@ import { categorylist, mentionlist } from '../constants'
 import { format } from 'date-fns'
 import { UserMyAppContext } from '../Context/MyAppContext'
 import * as XLSX from 'xlsx'
+import { renderFormatted, stripFormatting } from '../../lib/richText'
 
 const PAGE_SIZE = 5
 
@@ -839,7 +840,7 @@ const Page = () => {
         const rows = filteredEntries.map((entry) => ({
             Date: entry.date ? format(new Date(entry.date), 'dd MMM yyyy') : '',
             Title: entry.title || '',
-            description: entry.description || '',
+            description: stripFormatting(entry.description),
             mentions: entry.mention || '',
             Url: entry.url || '',
         }))
@@ -1027,8 +1028,8 @@ const Page = () => {
                                         </td>
                                         <td className='px-4 py-3 align-top whitespace-nowrap'>{entry.category}</td>
                                         <td className='px-4 py-3 align-top max-w-[260px]'>{entry.title}</td>
-                                        <td className='px-4 py-3 align-top max-w-[320px] text-gray-600'>
-                                            {entry.description}
+                                        <td className='px-4 py-3 align-top max-w-[320px] text-gray-600 whitespace-pre-wrap'>
+                                            {renderFormatted(entry.description)}
                                         </td>
                                         <td className='px-4 py-3 align-top max-w-[220px]'>{entry.mention}</td>
                                         <td className='px-4 py-3 align-top max-w-[220px] truncate'>
@@ -1074,7 +1075,7 @@ const Page = () => {
                                 <p className='text-sm font-medium text-gray-800 break-words'>{entry.title}</p>
 
                                 {entry.description && (
-                                    <p className='text-xs text-gray-600 break-words line-clamp-3'>{entry.description}</p>
+                                    <p className='text-xs text-gray-600 break-words line-clamp-3'>{renderFormatted(entry.description)}</p>
                                 )}
 
                                 {entry.mention && (

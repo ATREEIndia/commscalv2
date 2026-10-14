@@ -19,7 +19,7 @@ import { emailToColor, getInitial } from '../../lib/assignColor'
 import type { AppNotification } from '../smcal/types'
 import Image from 'next/image'
 import { UserMyAppContext } from '../Context/MyAppContext'
-import { Users } from 'lucide-react'
+import { Newspaper, Users } from 'lucide-react'
 
 function timeAgo(ts: AppNotification['createdAt'] | undefined | null): string {
   if (!ts?.toMillis) return ''
@@ -402,6 +402,30 @@ const Navbar = ({ current_page }: navprobes) => {
                 Admin
               </span>
             </Link>
+
+            {/* <Link
+              href="/genwtw"
+              className={`group w-full p-2.5 mt-1 flex items-center gap-3 rounded-xl
+                transition-all duration-200 border relative
+                ${current_page === "Generate WTW"
+                  ? "bg-white/15 text-white shadow-lg border-white/20"
+                  : "text-blue-200 hover:bg-white/10 hover:text-white border-transparent"
+                }`}
+            >
+              {current_page === "Generate WTW" && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6
+                  bg-blue-300 rounded-r-full"></div>
+              )}
+              <div className={`flex items-center justify-center w-8 h-8 rounded-lg
+                transition-all duration-200 flex-shrink-0
+                ${current_page === "Generate WTW"
+                  ? "bg-white/20"
+                  : "bg-blue-950/40 group-hover:bg-white/10"
+                }`}>
+                <Newspaper size={20} />
+              </div>
+              <span className="hidden sm:block text-sm font-medium">Generate WTW</span>
+            </Link> */}
           </div>
         </div>
       )}

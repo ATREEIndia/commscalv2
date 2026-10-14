@@ -1,7 +1,8 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app'
 import { getFirestore, type Firestore } from 'firebase-admin/firestore'
+import { getAuth, type Auth } from 'firebase-admin/auth'
 
-function getDb(): Firestore {
+function ensureApp() {
   if (getApps().length === 0) {
     initializeApp({
       credential: cert({
@@ -11,7 +12,17 @@ function getDb(): Firestore {
       }),
     })
   }
+}
+
+function getDb(): Firestore {
+  ensureApp()
   return getFirestore()
+}
+
+// Called at request time (not import time) for the same reason as adminDb below.
+export function getAdminAuth(): Auth {
+  ensureApp()
+  return getAuth()
 }
 
 // Proxy defers initializeApp until the first property access (request time, not build time)
