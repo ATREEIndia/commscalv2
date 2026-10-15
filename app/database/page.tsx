@@ -502,7 +502,7 @@ const Page = () => {
                         <div>
                             
                              <div className='flex text-sm rounded-xl border border-blue-300 overflow-hidden shadow-xl whitespace-nowrap' title="Show entries by their date, or by when they were added">
-                            {([['date', 'By date'], ['added', 'By Sumbmitted']] as const).map(([value, label]) => (
+                            {([['date', 'By date'], ['added', 'By submission']] as const).map(([value, label]) => (
                                 <div
                                     key={value}
                                     className={`px-3 py-2 cursor-pointer ${monthBy === value ? 'bg-blue-400 text-white' : 'bg-white hover:bg-blue-100'}`}
