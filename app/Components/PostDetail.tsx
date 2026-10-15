@@ -1357,7 +1357,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             )}
 
             {/* Set to Scheduled: same rule as above */}
-            {canChangeStatus && post.status !== 'scheduled' && (
+            {/* {canChangeStatus && post.status !== 'scheduled' && (
               <button
                 onClick={() => setStatus('scheduled')}
                 disabled={!hasApproval || !!statusSaving}
@@ -1367,7 +1367,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
               >
                 {statusSaving === 'scheduled' ? 'Updating…' : 'Set to Scheduled'}
               </button>
-            )}
+            )} */}
 
             {statusError && (
               <p className="w-full text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mt-1">
