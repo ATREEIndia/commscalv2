@@ -741,12 +741,12 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
                 </div>
 
                 <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>
-                    <div className='w-full flex flex-col '>
+                    {/* <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>SM Correction Doc URL</label>
                         <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setSmDoc(e.target.value) }} value={smDoc}></input>
 
-                    </div>
+                    </div> */}
 
                     {/* <div className='w-full flex flex-col '>
 

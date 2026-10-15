@@ -29,10 +29,13 @@ const SECTIONS: Section[] = [
     linkLabel: 'Open Database',
     steps: [
       <>Go to <b>Database</b> and click <b>+ Add New</b>.</>,
-      <>Fill the required fields: <b>Date of Publication / Event</b>, <b>Title</b>, <b>Publication / Document URL</b>, <b>Featuring Image</b>, <b>Description</b>, <b>Category</b> and <b>Mentions / Authors</b>.</>,
-      <>Use <b>Upload a file</b> / <b>Upload an image</b> to upload directly (max 4 MB for files, 3 MB for images). For larger files, upload to the shared Drive folder and paste the link.</>,
-      <>Add an <b>SM Correction Doc</b> link if the item needs a social media slide breakdown, and up to 5 <b>Tags</b> (optional).</>,
-      <>Click <b>Submit</b>. Submit early so the item makes it into the right week’s newsletter.</>,
+      <>Fill in the required fields: <b>Date of Publication / Event</b>, <b>Title</b>, <b>Publication / Document URL</b>, <b>Featuring Image</b>, <b>Description</b>, <b>Category</b> and <b>Mentions / Authors</b>.</>,
+      <>Write the <b>Description</b> in reported speech, as it will be used in the newsletter.</>,
+      <>Use <b>Upload a file</b> or <b>Upload an image</b> to upload files directly. The maximum file size is 4 MB for documents and 3 MB for images. For larger files, upload them to the shared Drive folder and paste the link in the relevant field.</>,
+      <>If you are using a Google Drive URL, ensure that the sharing permission is set to <b>Anyone with the link can view</b>.</>,
+      <>Add up to five <b>Tags</b> (optional) to help categorise the entry.</>,
+      <>When entering <b>Authors / Mentions</b>, select the appropriate value from the autofill suggestions. If no suitable suggestion is available, enter a new value.</>,
+      <>Click <b>Submit</b> to save the entry. Please submit entries as early as possible to ensure they are considered for the appropriate week's newsletter.</>,
     ],
   },
   {
@@ -71,7 +74,7 @@ const HomeInstrucations = () => {
         <p className='text-xs sm:text-sm text-gray-500 mt-1'>Timelines for publishing and the newsletter, and a quick guide to the Database and My Data.</p>
       </div>
 
-       {/* Guides */}
+      {/* Guides */}
       <div className='flex flex-col gap-2'>
         {SECTIONS.map((section) => (
           <details key={section.title} className='group rounded-xl border border-gray-200 open:bg-gray-50/60'>
@@ -135,7 +138,7 @@ const HomeInstrucations = () => {
         </div>
       </div>
 
-     
+
     </section>
   )
 }

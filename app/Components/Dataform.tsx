@@ -494,16 +494,16 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                     <input className={`p-2 border-2  ${title_error ? "border-red-200" : "border-gray-100"}  rounded-xl shadow text-sm`} type='text' onChange={(e) => { setTitle(e.target.value) }} value={title}></input>
                 </div>
 
-                <div className='w-full flex flex-col py-1 mt-4'>
+                {/* <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>SM Correction Doc URL</label>
                     <p className='text-xs px-2 text-blue-700'>For slide breakdown for social media (optional) </p>
                     <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setSmDoc(e.target.value) }} value={smDoc}></input>
-                </div>
+                </div> */}
 
                 <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>
                     <div className='w-full flex flex-col '>
 
-                        <label className='text-sm font-medium text-gray-600 px-2'>Publication / Document URL*</label>
+                        <label className='text-sm font-medium text-gray-600 px-2'>Publication / Document URL</label>
                         <input className={`p-2 border-2 ${url_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
                         {!uplaodStatus && <span className='text-sm text-red-800 px-2'>File Uplod failed. Upload to the <a className='text-blue-700 underline' href='https://drive.google.com/drive/folders/1YgMS9-em71U_UfSdfydsihLgOggTrUDI' target='_blank'>folder</a> direcly and paste the url</span>}
                         {uplaodStatus && <span className='text-sm text-blue-800 px-2'>Max upload size is 4 MB. If larger, upload to the <a className='text-blue-500 font-bold underline' href='https://drive.google.com/drive/folders/1YgMS9-em71U_UfSdfydsihLgOggTrUDI' target='_blank'>folder</a> direcly and paste the url</span>}
