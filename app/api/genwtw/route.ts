@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminDb, getAdminAuth } from '../../../lib/firebaseAdmin'
+import { WTW_AUDIENCES, isWtwAudience } from '../../../lib/wtwAudiences'
 
 const NEWSLETTER_URL = 'https://asia-south1-resourcehub-d7764.cloudfunctions.net/runNewsletter'
 
@@ -30,16 +31,32 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null)
   const date = body?.date
-  const force = body?.force === true
   if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date) || isNaN(Date.parse(date))) {
     return NextResponse.json({ error: 'Please pick a valid date.' }, { status: 400 })
+  }
+  const audience: unknown = body?.audience
+  if (!isWtwAudience(audience)) {
+    return NextResponse.json({ error: 'Please choose who to send the newsletter to.' }, { status: 400 })
+  }
+
+  // List IDs come from the server-side config, never from the request.
+  const { mode, listIds } = WTW_AUDIENCES[audience]
+  if (mode === 'send' && body?.confirmSend !== true) {
+    return NextResponse.json({ error: 'Sending must be confirmed.' }, { status: 400 })
+  }
+  const payload = {
+    date,
+    mode,
+    listIds: [...listIds],
+    force: body?.force === true,
+    ...(mode === 'send' ? { confirmSend: true } : {}),
   }
 
   try {
     const res = await fetch(NEWSLETTER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-run-token': runToken },
-      body: JSON.stringify({ date, force }),
+      body: JSON.stringify(payload),
     })
     const text = await res.text()
     let data: unknown

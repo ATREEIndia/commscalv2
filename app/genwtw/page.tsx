@@ -9,8 +9,16 @@ import { addedDate } from '../../lib/items';
 import { renderFormatted } from '../../lib/richText';
 import { convertDriveUrl } from '../../lib/driveUrl';
 import Editform from '../Components/Editform';
+import { WTW_AUDIENCES, type WtwAudience } from '../../lib/wtwAudiences';
 
-type RunResult = { ok: boolean; status?: number; data?: unknown; error?: string }
+type RunResult = { ok: boolean; audience: WtwAudience; status?: number; data?: unknown; error?: string }
+
+// Colours get stronger as the audience gets wider.
+const AUDIENCE_STYLE: Record<WtwAudience, { selected: string; button: string }> = {
+    test: { selected: 'bg-blue-50 border-blue-500 text-blue-800', button: 'bg-blue-600 hover:bg-blue-700' },
+    internal: { selected: 'bg-amber-50 border-amber-500 text-amber-900', button: 'bg-amber-600 hover:bg-amber-700' },
+    global: { selected: 'bg-red-50 border-red-600 text-red-800', button: 'bg-red-600 hover:bg-red-700' },
+}
 
 // Order of sections in the newsletter. Categories not listed here follow, in
 // the order of `categorylist`. Sections with no items are skipped.
@@ -66,7 +74,8 @@ const Page = () => {
 
     const [date, setDate] = useState(latestMonday)
     const [force, setForce] = useState(false)
-    const [running, setRunning] = useState(false)
+    const [running, setRunning] = useState<WtwAudience | null>(null)
+    const [audience, setAudience] = useState<WtwAudience>('test')
     const [result, setResult] = useState<RunResult | null>(null)
 
     const [items, setItems] = useState<itemprobes[] | null>(null)
@@ -105,9 +114,25 @@ const Page = () => {
     // Item open in the edit form
     const [editing, setEditing] = useState<itemprobes | null>(null)
 
-    const genWtw = async () => {
+    // Real sends (mode "send") go through a confirmation dialog first.
+    const [confirming, setConfirming] = useState<WtwAudience | null>(null)
+    const [confirmText, setConfirmText] = useState('')
+
+    const requestRun = (audience: WtwAudience) => {
         if (running || !date) return
-        setRunning(true)
+        if (WTW_AUDIENCES[audience].mode === 'send') {
+            setConfirmText('')
+            setConfirming(audience)
+        } else {
+            runWtw(audience)
+        }
+    }
+
+    const runWtw = async (audience: WtwAudience) => {
+        if (running || !date) return
+        const isSend = WTW_AUDIENCES[audience].mode === 'send'
+        setConfirming(null)
+        setRunning(audience)
         setResult(null)
         try {
             const idToken = await auth.currentUser?.getIdToken()
@@ -117,16 +142,16 @@ const Page = () => {
                     'Content-Type': 'application/json',
                     ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
                 },
-                body: JSON.stringify({ date, force }),
+                body: JSON.stringify({ date, audience, force, ...(isSend ? { confirmSend: true } : {}) }),
             })
             const json = await res.json().catch(() => ({}))
             setResult(res.ok
-                ? { ok: true, status: json.status, data: json.data }
-                : { ok: false, status: json.status ?? res.status, data: json.data, error: json.error })
+                ? { ok: true, audience, status: json.status, data: json.data }
+                : { ok: false, audience, status: json.status ?? res.status, data: json.data, error: json.error })
         } catch (error) {
-            setResult({ ok: false, error: String(error) })
+            setResult({ ok: false, audience, error: String(error) })
         } finally {
-            setRunning(false)
+            setRunning(null)
         }
     }
 
@@ -200,20 +225,51 @@ const Page = () => {
                                     </span>
                                 </label>
 
+                                <div className='flex flex-col gap-2'>
+                                    <span id='wtw-send-to' className='text-sm font-medium text-gray-700'>Send to</span>
+                                    <div role='radiogroup' aria-labelledby='wtw-send-to' className='grid grid-cols-1 sm:grid-cols-3 gap-2'>
+                                        {(Object.keys(WTW_AUDIENCES) as WtwAudience[]).map((key) => {
+                                            const a = WTW_AUDIENCES[key]
+                                            const selected = audience === key
+                                            return (
+                                                <button
+                                                    key={key}
+                                                    type='button'
+                                                    role='radio'
+                                                    aria-checked={selected}
+                                                    onClick={() => setAudience(key)}
+                                                    disabled={!!running}
+                                                    className={`flex items-start gap-2.5 px-4 py-3 rounded-xl border-2 text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                                                        ${selected ? AUDIENCE_STYLE[key].selected : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                                                >
+                                                    <span className={`mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${selected ? 'border-current' : 'border-gray-300'}`}>
+                                                        {selected && <span className='w-2 h-2 rounded-full bg-current' />}
+                                                    </span>
+                                                    <span className='flex flex-col gap-0.5 min-w-0'>
+                                                        <span className='text-sm font-semibold'>{a.label}</span>
+                                                        <span className='text-[11px] opacity-80'>{a.description} · list {a.listIds.join(', ')}</span>
+                                                    </span>
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                    <p className='text-xs text-gray-500'>Send a test first and check it before sending internally or globally. Internal and global sends ask for confirmation.</p>
+                                </div>
+
                                 <button
                                     type='button'
-                                    onClick={genWtw}
-                                    disabled={running || !date}
-                                    className='w-full sm:w-auto self-start px-5 py-2.5 rounded-xl text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                                    onClick={() => requestRun(audience)}
+                                    disabled={!!running || !date}
+                                    className={`w-full sm:w-auto self-start px-6 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed ${AUDIENCE_STYLE[audience].button}`}
                                 >
-                                    {running ? 'Generating…' : 'Generate newsletter'}
+                                    {running ? 'Sending…' : `Send now · ${WTW_AUDIENCES[audience].label.replace(/^Send /, '')}`}
                                 </button>
                             </section>
 
                             {result && (
                                 <section className={`rounded-2xl border p-4 sm:p-5 flex flex-col gap-2 ${result.ok ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
                                     <h2 className={`text-sm font-semibold ${result.ok ? 'text-green-800' : 'text-red-700'}`}>
-                                        {result.ok ? '✓ Newsletter generated' : '✕ Generation failed'}
+                                        {result.ok ? `✓ ${WTW_AUDIENCES[result.audience].label} done` : `✕ ${WTW_AUDIENCES[result.audience].label} failed`}
                                         {result.status ? <span className='font-normal text-xs ml-2'>(HTTP {result.status})</span> : null}
                                     </h2>
                                     {result.error && <p className='text-sm text-red-700'>{result.error}</p>}
@@ -273,6 +329,48 @@ const Page = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Confirmation before a real send */}
+                {confirming && (
+                    <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm'>
+                        <div className='bg-white rounded-2xl shadow-2xl w-full max-w-md p-5 sm:p-6 flex flex-col gap-4'>
+                            <h2 className='text-lg font-bold text-gray-800'>{WTW_AUDIENCES[confirming].label}?</h2>
+                            <div className='text-sm text-gray-600 flex flex-col gap-1'>
+                                <p>This sends the newsletter to <b>{WTW_AUDIENCES[confirming].description.toLowerCase()}</b> (list {WTW_AUDIENCES[confirming].listIds.join(', ')}).</p>
+                                <p>Newsletter date: <b>{date}</b>{coverage && <> · {weekItems.length} item{weekItems.length !== 1 ? 's' : ''}</>}{force && <> · <b>force regenerate</b></>}</p>
+                                <p className='text-red-700'>Once sent, it can’t be undone.</p>
+                            </div>
+                            {confirming === 'global' && (
+                                <label className='flex flex-col gap-1 text-sm text-gray-700'>
+                                    Type <b>SEND</b> to confirm
+                                    <input
+                                        value={confirmText}
+                                        onChange={(e) => setConfirmText(e.target.value)}
+                                        autoFocus
+                                        className='border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-300'
+                                    />
+                                </label>
+                            )}
+                            <div className='flex flex-col-reverse sm:flex-row sm:justify-end gap-2'>
+                                <button
+                                    type='button'
+                                    onClick={() => setConfirming(null)}
+                                    className='px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50'
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type='button'
+                                    onClick={() => runWtw(confirming)}
+                                    disabled={confirming === 'global' && confirmText.trim().toUpperCase() !== 'SEND'}
+                                    className='px-5 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                                >
+                                    Yes, send now
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Edit form for the clicked item; it closes itself after saving */}
 
