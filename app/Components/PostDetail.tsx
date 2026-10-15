@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Mail, X } from 'lucide-react'
 import {
@@ -21,7 +21,8 @@ import {
   updateDoc,
 } from 'firebase/firestore'
 import { equalTo, get, orderByChild, query as rtdbQuery, ref, update } from 'firebase/database'
-import { db, firestore } from '../firebase/firebase'
+import { auth, db, firestore } from '../firebase/firebase'
+import { downloadPostMedia } from '../../lib/postMedia'
 import type { SMPost, SMComment, HistoryEvent, PostActor, AppNotification } from '../smcal/types'
 import { convertDriveUrl, getDriveDownloadUrl } from '../../lib/driveUrl'
 import { useMediaType } from '../hooks/useMediaType'
@@ -34,6 +35,7 @@ import HistoryLog from './HistoryLog'
 import ImageSlotList from './ImageSlotList'
 import PostDetailLightbox from './PostDetailLightbox'
 import EmailChipInput, { isValidEmail } from './EmailChipInput'
+import InstaLinksForm from './InstaLinksForm'
 
 // ── Status config ──────────────────────────────────────────────────────────────
 const STATUS_CFG = {
@@ -71,6 +73,15 @@ interface Props {
 function formatIST(ts: Timestamp | null | undefined): string {
   if (!ts?.toDate) return '—'
   return dayjs(ts.toDate()).tz(IST).format('DD MMM YYYY, hh:mm A')
+}
+
+const HOOTSUITE_URL = 'https://hootsuite.com/dashboard#/home'
+
+// Link to pre-fill in InstaLinks: the post's document URL, else the first URL in the body copy.
+function postLink(post: SMPost): string {
+  const doc = post.docUrl?.trim()
+  if (doc && /^https?:\/\//i.test(doc)) return doc
+  return post.bodyCopy?.match(/https?:\/\/[^\s)]+/i)?.[0] ?? ''
 }
 
 function shareText(post: SMPost, postId: string) {
@@ -233,6 +244,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   const [comments, setComments] = useState<SMComment[]>([])
   const [history, setHistory] = useState<HistoryEvent[]>([])
   const [loading, setLoading] = useState(true)
+  
 
   // Edit states
   const [editingTitle, setEditingTitle] = useState(false)
@@ -249,6 +261,12 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   const [approving, setApproving] = useState(false)
   const [statusSaving, setStatusSaving] = useState<SMPost['status'] | null>(null)
   const [statusError, setStatusError] = useState('')
+  const [showInstaPrompt, setShowInstaPrompt] = useState(false)
+  const [copyFallback, setCopyFallback] = useState(false)
+  const [preparingMedia, setPreparingMedia] = useState(false)
+  const [postingDone, setPostingDone] = useState<{ failed: string[]; tabBlocked: boolean } | null>(null)
+  // Log/notification writes still running after a status change; awaited before leaving the page.
+  const pendingAfterStatus = useRef<Promise<unknown>>(Promise.resolve())
 
   // UI
   const [selectedImg, setSelectedImg] = useState<number | null>(null)
@@ -670,9 +688,54 @@ export default function PostDetail({ postId, user, onClose }: Props) {
       setStatusSaving(null)
     }
 
+    // Database and task are updated: now offer InstaLinks.
+    if (status === 'posted') setShowInstaPrompt(true)
+
     // Log and notifications are best effort; the status change itself is done.
-    await log('status_changed', prev, status).catch(console.error)
-    await notifyOwners('status_changed', `${actor.name} changed the status of "${post.title}" from ${prev} to ${status}`).catch(console.error)
+    const after = (async () => {
+      await log('status_changed', prev, status).catch(console.error)
+      await notifyOwners('status_changed', `${actor.name} changed the status of "${post.title}" from ${prev} to ${status}`).catch(console.error)
+    })()
+    pendingAfterStatus.current = after
+    await after
+  }
+
+  // Closing the InstaLinks prompt (added or skipped): copy the body copy, download
+  // the post's media, then open Hootsuite. The copy runs first, while the click
+  // still allows it.
+  const finishPosting = async () => {
+    setShowInstaPrompt(false)
+    try {
+      await navigator.clipboard.writeText(post.bodyCopy || '')
+    } catch (error) {
+      console.error('Clipboard write failed:', error)
+      setCopyFallback(true)
+      return
+    }
+    setCopyFallback(false)
+
+    // Download the post's media (zip, plus a combined PDF when there are several images).
+    setPreparingMedia(true)
+    let failed: string[] = []
+    try {
+      const urls = (post.images || []).filter((u) => u.trim())
+      if (urls.length) {
+        const idToken = (await auth.currentUser?.getIdToken()) ?? ''
+        failed = await downloadPostMedia(post.title, urls, idToken)
+      }
+    } catch (error) {
+      console.error('Preparing media failed:', error)
+      failed = post.images || []
+    } finally {
+      setPreparingMedia(false)
+    }
+
+    await pendingAfterStatus.current.catch(() => {})
+
+    // Opening a tab this long after the click may be blocked; then offer a button.
+    const tab = window.open(HOOTSUITE_URL, '_blank')
+    if (tab) tab.opener = null
+    if (!tab || failed.length) setPostingDone({ failed, tabBlocked: !tab })
   }
 
   // Syncs the linked task and Database item when a post moves to or from posted.
@@ -1388,6 +1451,82 @@ export default function PostDetail({ postId, user, onClose }: Props) {
           assigneeEmail={post.assignedTo}
           onClose={() => setLightboxIndex(null)}
         />
+      )}
+
+      {/* ── After "Mark as Posted": offer to add the post to InstaLinks ── */}
+      {showInstaPrompt && (
+        <InstaLinksForm
+          addedByEmail={user?.email ?? ''}
+          initialLink={postLink(post)}
+          suggestedTitle={post.title}
+          suggestedTitleLabel='Use post title'
+          heading='Add to InstaLinks?'
+          message='The post is marked as posted. Add it to InstaLinks, or skip. Afterwards the body copy is copied, the media is downloaded and Hootsuite opens.'
+          cancelLabel='Skip'
+          onClose={finishPosting}
+          onSuccess={finishPosting}
+        />
+      )}
+
+      {/* Clipboard was blocked: one more click copies and continues */}
+      {copyFallback && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full flex flex-col gap-4">
+            <p className="text-sm text-gray-600">Click below to copy the body copy, download the media and open Hootsuite.</p>
+            <button
+              onClick={finishPosting}
+              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700"
+            >
+              Copy body copy &amp; continue
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Building the media zip/PDF */}
+      {preparingMedia && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" role="status" aria-live="polite">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full flex items-center gap-3">
+            <span className="w-5 h-5 rounded-full border-2 border-blue-600 border-t-transparent animate-spin flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-gray-800">Preparing media to post</p>
+              <p className="text-xs text-gray-500">Downloading the images; your download will start shortly.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Media couldn't all be included, or the Hootsuite tab was blocked */}
+      {postingDone && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full flex flex-col gap-3">
+            <p className="text-sm font-semibold text-gray-800">Body copy copied</p>
+            {postingDone.failed.length > 0 && (
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                {postingDone.failed.length} file{postingDone.failed.length > 1 ? 's' : ''} couldn&apos;t be downloaded and {postingDone.failed.length > 1 ? 'are' : 'is'} missing from the zip. Download {postingDone.failed.length > 1 ? 'them' : 'it'} from the post&apos;s images.
+              </p>
+            )}
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-1">
+              <button
+                onClick={() => setPostingDone(null)}
+                className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50"
+              >
+                Close
+              </button>
+              {postingDone.tabBlocked && (
+                <a
+                  href={HOOTSUITE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setPostingDone(null)}
+                  className="px-4 py-2 text-sm text-center font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700"
+                >
+                  Open Hootsuite
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -10,16 +10,26 @@ type Props = {
     addedByEmail: string,
     onClose: () => void,
     onSuccess: () => void,
+    // Optional pre-fill and wording, e.g. when prompted after posting on SM Cal
+    initialTitle?: string,
+    initialLink?: string,
+    heading?: string,
+    message?: string,
+    cancelLabel?: string,
+    // Offered as a one-click alternative to the title fetched from the link
+    suggestedTitle?: string,
+    suggestedTitleLabel?: string,
 }
 
-const InstaLinksForm = ({ addedByEmail, onClose, onSuccess }: Props) => {
-    const [title, setTitle] = useState("")
-    const [link, setLink] = useState("")
+const InstaLinksForm = ({ addedByEmail, onClose, onSuccess, initialTitle = "", initialLink = "", heading = "Add Link", message, cancelLabel = "Cancel", suggestedTitle, suggestedTitleLabel = "Use suggested title" }: Props) => {
+    const [title, setTitle] = useState(initialTitle)
+    const [link, setLink] = useState(initialLink)
     const [titleError, setTitleError] = useState("")
     const [linkError, setLinkError] = useState("")
     const [submitError, setSubmitError] = useState("")
     const [submitting, setSubmitting] = useState(false)
-    const [titleTouched, setTitleTouched] = useState(false)
+    // A provided title counts as chosen, so the link's page title doesn't replace it.
+    const [titleTouched, setTitleTouched] = useState(!!initialTitle)
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -103,11 +113,12 @@ const InstaLinksForm = ({ addedByEmail, onClose, onSuccess }: Props) => {
   
 
     return (
-        <div className='w-full h-full absolute top-0 right-0 flex justify-center items-center z-50'>
+        <div className='w-full h-full fixed inset-0 flex justify-center items-center z-[60]'>
             <div className='relative w-full h-full flex justify-center items-center'>
                 <div className='absolute top-0 right-0 w-full h-full bg-gray-100 opacity-50' onClick={() => { if (!submitting) onClose(); }}></div>
-                <div className='border-2 w-[90%] sm:w-[30%] p-4 items-center flex flex-col border-gray-50 z-20 gap-2 bg-white rounded-xl shadow-lg'>
-                    <h1 className='font-bold text-lg'>Add Link</h1>
+                <div className='border-2 w-[90%] sm:w-[60%] lg:w-[30%] p-4 items-center flex flex-col border-gray-50 z-20 gap-2 bg-white rounded-xl shadow-lg'>
+                    <h1 className='font-bold text-lg'>{heading}</h1>
+                    {message && <p className='text-sm text-gray-500 text-center'>{message}</p>}
 
                     <div className='w-full flex flex-col gap-1'>
                         <input
@@ -115,9 +126,19 @@ const InstaLinksForm = ({ addedByEmail, onClose, onSuccess }: Props) => {
                             placeholder='Title'
                             className='text-sm p-2 border-2 border-blue-50 rounded-xl w-full'
                             value={title}
-                            onChange={(e) => { setTitle(e.target.value); setTitleError(""); }}
+                            onChange={(e) => { setTitle(e.target.value); setTitleTouched(true); setTitleError(""); }}
                         />
                         {titleError && <p className='text-xs text-red-500'>{titleError}</p>}
+                        {suggestedTitle && title !== suggestedTitle && (
+                            <button
+                                type='button'
+                                onClick={() => { setTitle(suggestedTitle); setTitleTouched(true); setTitleError(""); }}
+                                className='self-start text-xs text-blue-500 hover:text-blue-700 px-1 text-left'
+                                title={suggestedTitle}
+                            >
+                                {suggestedTitleLabel}: <span className='italic'>{suggestedTitle.length > 60 ? suggestedTitle.slice(0, 60) + '…' : suggestedTitle}</span>
+                            </button>
+                        )}
                     </div>
 
                     <div className='w-full flex flex-col gap-1'>
@@ -139,7 +160,7 @@ const InstaLinksForm = ({ addedByEmail, onClose, onSuccess }: Props) => {
                             onClick={onClose}
                             disabled={submitting}
                         >
-                            Cancel
+                            {cancelLabel}
                         </button>
 
                         <button
