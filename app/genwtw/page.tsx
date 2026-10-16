@@ -10,6 +10,7 @@ import { renderFormatted } from '../../lib/richText';
 import { convertDriveUrl } from '../../lib/driveUrl';
 import Editform from '../Components/Editform';
 import { WTW_AUDIENCES, type WtwAudience } from '../../lib/wtwAudiences';
+import {  addWeeks, nextMonday as getNextMonday } from 'date-fns'
 
 type RunResult = { ok: boolean; audience: WtwAudience; status?: number; data?: unknown; error?: string }
 
@@ -66,13 +67,21 @@ const latestMonday = () => {
     const today = new Date()
     return format(isMonday(today) ? today : previousMonday(today), 'yyyy-MM-dd')
 }
+const nextMonday = () => {
+    const today = new Date()
+
+    return format(
+        isMonday(today) ? addWeeks(today, 1) : getNextMonday(today),
+        'yyyy-MM-dd'
+    )
+}
 
 const Page = () => {
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
     const { user, isRegUser, role } = UserMyAppContext()
     const isAdmin = isRegUser && role === 'admin'
 
-    const [date, setDate] = useState(latestMonday)
+    const [date, setDate] = useState(nextMonday)
     const [force, setForce] = useState(false)
     const [running, setRunning] = useState<WtwAudience | null>(null)
     const [audience, setAudience] = useState<WtwAudience>('test')
