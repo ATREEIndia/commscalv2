@@ -46,7 +46,7 @@ const imageSrc = (url?: string) => {
 }
 
 // Gap between auto-assigned weights, so an item can be slotted between two by hand.
-const WEIGHT_STEP = 10
+const WEIGHT_STEP = 1
 
 // Within a section: higher wtwWeight first; unweighted items after, by date.
 const byWeight = (a: itemprobes, b: itemprobes) => {
