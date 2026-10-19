@@ -93,7 +93,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
     const [tags, setTags] = useState<string[]>(selectedEntry?.tags ?? []);
 
     // Uploads are limited to the person who added the entry and admins.
-    const canUpload = (!!userEmail && selectedEntry?.addedBy === userEmail) || (isRegUser && role === "admin");
+    const canUpload = (!!userEmail && selectedEntry?.addedBy === userEmail) || (isRegUser && role === "admin") || (isRegUser && role === "Editor");
     const [uploading, setUploading] = useState<'' | 'file' | 'image'>('');
     const [uploadError, setUploadError] = useState<'' | 'file' | 'image'>('');
     const [cropFile, setCropFile] = useState<File | null>(null);
