@@ -26,7 +26,7 @@ export const nav_items: NavItem[] = [
   { name: "My Data", href: "/myData", icon: "", reactIcon: FaReceipt, no_reg: true },
   { name: "Google sheet", href: "https://docs.google.com/spreadsheets/d/18I8QnxgKxle1-pA6Cw9_VEa6hnTk_nzAApl_IV194hc/edit?", reactIcon: FaRegFileExcel, icon: "/gs.png", no_reg: false },
 
-  // { name: "Generate WTW", href: "/genwtw", icon: "", reactIcon: FaRegNewspaper, no_reg: false },
+  { name: "Generate WTW", href: "/genwtw", icon: "", reactIcon: FaRegNewspaper, no_reg: false },
 ]
 
 export type taskprobs = {
