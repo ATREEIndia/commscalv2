@@ -1,4 +1,5 @@
 'use client'
+
 import Link from 'next/link'
 import React, { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -160,9 +161,11 @@ const Navbar = ({ current_page }: navprobes) => {
   const { isRegUser } = UserMyAppContext()
 
   return (
-    <div className="flex h-full z-20 sm:w-[200px] min-h-[99vh] flex-col 
+
+    
+    <div className="flex h-dvh max-h-dvh z-20 sm:w-[200px] flex-col
       bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 
-      text-white items-center rounded-r-2xl shadow-2xl border-r border-blue-700 overflow-y-scroll scrollbar-hide">
+      text-white items-center rounded-r-2xl shadow-2xl border-r border-blue-700 ">
 
       {/* Logo Section */}
       <div className="w-full flex flex-col items-center py-6 px-4 
@@ -190,7 +193,7 @@ const Navbar = ({ current_page }: navprobes) => {
       </div>
 
       {/* Notifications */}
-      <div className="w-full px-3 pt-3 pb-1 relative">
+      <div className="w-full px-3 pt-3 pb-1 relative scrollbar-hide">
         <button
           onClick={() => setShowDropdown((v) => !v)}
           className="group w-full p-2.5 flex items-center gap-3 rounded-xl
@@ -227,7 +230,7 @@ const Navbar = ({ current_page }: navprobes) => {
         {showDropdown && (
           <>
             <div
-              className="fixed inset-0 z-30"
+              className="absolute inset-0 z-30"
               onClick={() => setShowDropdown(false)}
             />
             <div className="absolute left-2 sm:left-full sm:ml-2 top-0 z-40 w-[360px] max-w-[90vw]
@@ -252,7 +255,7 @@ const Navbar = ({ current_page }: navprobes) => {
                   </button>
                 )}
               </div>
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto ">
                 {notifications.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 text-gray-300">
                     <svg
@@ -299,8 +302,12 @@ const Navbar = ({ current_page }: navprobes) => {
         )}
       </div>
 
+      {/* Scrollable middle: nav + admin links. Logo above and profile below stay put. */}
+      <div className="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain py-2 
+        [scrollbar-width:thin] [scrollbar-color:rgba(147,197,253,0.4)_transparent]">
+
       {/* Nav Items */}
-      <div className="flex flex-col gap-1 w-full px-3">
+      <div className="flex flex-col gap-1 w-full px-3 ">
         {nav_items.map((item, index) => (
           <Link
             href={item.href}
@@ -430,8 +437,7 @@ const Navbar = ({ current_page }: navprobes) => {
         </div>
       )}
 
-      {/* Spacer */}
-      <div className="flex-1"></div>
+      </div>{/* end scrollable middle (also acts as the spacer) */}
 
       {/* User Profile & Logout */}
       <div className="w-full p-3 border-t border-blue-700/50">
@@ -475,6 +481,7 @@ const Navbar = ({ current_page }: navprobes) => {
         </button>
       </div>
     </div>
+    
   );
 };
 
