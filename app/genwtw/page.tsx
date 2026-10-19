@@ -79,7 +79,7 @@ const nextMonday = () => {
 const Page = () => {
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
     const { user, isRegUser, role } = UserMyAppContext()
-    const isAdmin = isRegUser && role === 'admin'
+    const isAdmin = isRegUser 
 
     const [date, setDate] = useState(nextMonday)
     const [force, setForce] = useState(false)
