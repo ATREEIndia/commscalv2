@@ -1,9 +1,10 @@
 'use client'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { ref, update } from 'firebase/database'
 import { addDays, endOfDay, format, parseISO, previousMonday, isMonday, startOfDay } from 'date-fns'
 import Navbar from '../Components/Navbar';
 import { UserMyAppContext } from '../Context/MyAppContext';
-import { auth, listenToItems } from '../firebase/firebase';
+import { auth, db, listenToItems } from '../firebase/firebase';
 import { categorylist, type itemprobes } from '../constants';
 import { addedDate } from '../../lib/items';
 import { renderFormatted } from '../../lib/richText';
@@ -36,12 +37,22 @@ const CATEGORY_ORDER = [
 ]
 
 // Only these sections show the publication (platform) and authors (mention).
-const BYLINE_CATEGORIES = ['Authored Journal Articles', 'Featured Popular Article', 'Book chapters']
+const BYLINE_CATEGORIES = ['Authored Journal Articles','Authored Popular Article', 'Featured Popular Article', 'Book chapters']
 
 // Google Drive share links aren't image URLs; use Drive's thumbnail endpoint instead.
 const imageSrc = (url?: string) => {
     if (!url?.startsWith('http')) return ''
     return /(^|\.)(drive|docs)\.google\.com$/.test(new URL(url).hostname) ? convertDriveUrl(url) : url
+}
+
+// Gap between auto-assigned weights, so an item can be slotted between two by hand.
+const WEIGHT_STEP = 10
+
+// Within a section: higher wtwWeight first; unweighted items after, by date.
+const byWeight = (a: itemprobes, b: itemprobes) => {
+    const wa = typeof a.wtwWeight === 'number' ? a.wtwWeight : -Infinity
+    const wb = typeof b.wtwWeight === 'number' ? b.wtwWeight : -Infinity
+    return wb - wa || (a.date || '').localeCompare(b.date || '')
 }
 
 const categoryRank = (category: string) => {
@@ -119,14 +130,75 @@ const Page = () => {
     }, [items, coverage])
 
     // [category, items] in newsletter order; empty categories never appear.
+    // Within a category: higher wtwWeight first, then items without a weight by date.
     const groups = useMemo(() => {
         const map = new Map<string, itemprobes[]>()
         weekItems.forEach((item) => {
             const key = item.category || 'Uncategorised'
             map.set(key, [...(map.get(key) ?? []), item])
         })
-        return Array.from(map.entries()).sort(([a], [b]) => categoryRank(a) - categoryRank(b))
+        return Array.from(map.entries())
+            .map(([category, list]) => [category, [...list].sort(byWeight)] as [string, itemprobes[]])
+            .sort(([a], [b]) => categoryRank(a) - categoryRank(b))
     }, [weekItems])
+
+    // When the preview is built, give every item without a weight one that keeps
+    // the current order (below the weighted items of its section). Admins only.
+    const assigning = useRef(new Set<string>())
+    useEffect(() => {
+        if (!isAdmin) return
+        const updates: Record<string, number> = {}
+        groups.forEach(([, list]) => {
+            const weights = list.map((i) => i.wtwWeight).filter((w): w is number => typeof w === 'number')
+            let next = (weights.length ? Math.min(...weights) : (list.length + 1) * WEIGHT_STEP) - WEIGHT_STEP
+            list.forEach((item) => {
+                if (typeof item.wtwWeight === 'number' || !item.id || assigning.current.has(item.id)) return
+                updates[`items/${item.id}/wtwWeight`] = next
+                assigning.current.add(item.id)
+                next -= WEIGHT_STEP
+            })
+        })
+        if (Object.keys(updates).length) {
+            update(ref(db), updates).catch((error) => {
+                console.error('Assigning weights failed:', error)
+                Object.keys(updates).forEach((path) => assigning.current.delete(path.split('/')[1]))
+            })
+        }
+    }, [groups, isAdmin])
+
+    // Saves a new order for a section as evenly spaced weights (top = highest).
+    const saveOrder = async (ordered: itemprobes[]) => {
+        const updates: Record<string, number> = {}
+        ordered.forEach((item, i) => {
+            const weight = (ordered.length - i) * WEIGHT_STEP
+            if (item.id && item.wtwWeight !== weight) updates[`items/${item.id}/wtwWeight`] = weight
+        })
+        if (!Object.keys(updates).length) return
+        try {
+            await update(ref(db), updates)
+        } catch (error) {
+            console.error('Saving order failed:', error)
+            alert('Could not save the new order. Please try again.')
+        }
+    }
+
+    const moveItem = (list: itemprobes[], index: number, delta: -1 | 1) => {
+        const target = index + delta
+        if (target < 0 || target >= list.length) return
+        const ordered = [...list]
+        ;[ordered[index], ordered[target]] = [ordered[target], ordered[index]]
+        saveOrder(ordered)
+    }
+
+    const setWeight = async (item: itemprobes, weight: number) => {
+        if (!item.id || !Number.isFinite(weight) || weight === item.wtwWeight) return
+        try {
+            await update(ref(db, `items/${item.id}`), { wtwWeight: weight })
+        } catch (error) {
+            console.error('Saving weight failed:', error)
+            alert('Could not save the weight. Please try again.')
+        }
+    }
 
     // Item open in the edit form
     const [editing, setEditing] = useState<itemprobes | null>(null)
@@ -327,12 +399,19 @@ const Page = () => {
                                                     <React.Fragment key={r}>
                                                         {r > 0 && <div className='mx-[15px] my-2.5' style={{ borderTop: `3px solid ${NL.divider}` }} />}
                                                         <div className={`grid grid-cols-1 ${row.length > 1 ? 'sm:grid-cols-2' : ''} gap-y-4 pt-5`}>
-                                                            {row.map((item) => (
+                                                            {row.map((item, c) => (
                                                                 <NewsletterCard
                                                                     key={item.id}
                                                                     item={item}
                                                                     showByline={BYLINE_CATEGORIES.includes(category)}
                                                                     onOpen={() => setEditing(item)}
+                                                                    order={{
+                                                                        isFirst: r * 2 + c === 0,
+                                                                        isLast: r * 2 + c === list.length - 1,
+                                                                        onUp: () => moveItem(list, r * 2 + c, -1),
+                                                                        onDown: () => moveItem(list, r * 2 + c, 1),
+                                                                        onWeight: (w) => setWeight(item, w),
+                                                                    }}
                                                                 />
                                                             ))}
                                                         </div>
@@ -440,7 +519,48 @@ const chunkPairs = <T,>(list: T[]): T[][] => {
 
 // One item as it appears in the newsletter. Clicking it opens the edit form;
 // "Read More" opens the item's link instead.
-function NewsletterCard({ item, showByline, onOpen }: { item: itemprobes; showByline: boolean; onOpen: () => void }) {
+type OrderControls = {
+    isFirst: boolean
+    isLast: boolean
+    onUp: () => void
+    onDown: () => void
+    onWeight: (weight: number) => void
+}
+
+// Move up/down and the weight itself. Clicks here don't open the edit form.
+function OrderBar({ weight, order }: { weight?: number; order: OrderControls }) {
+    const [draft, setDraft] = useState(weight?.toString() ?? '')
+    useEffect(() => { setDraft(weight?.toString() ?? '') }, [weight])
+
+    const commit = () => {
+        const value = Number(draft)
+        if (draft.trim() === '' || !Number.isFinite(value)) setDraft(weight?.toString() ?? '')
+        else order.onWeight(value)
+    }
+    const stop = (e: React.SyntheticEvent) => e.stopPropagation()
+    const arrow = 'w-7 h-7 rounded-md border border-gray-200 bg-white text-xs text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed'
+
+    return (
+        <div className='flex items-center justify-end gap-1 mb-1.5 font-sans' onClick={stop} onKeyDown={stop}>
+            <button type='button' className={arrow} onClick={order.onUp} disabled={order.isFirst} title='Move up' aria-label='Move up'>▲</button>
+            <button type='button' className={arrow} onClick={order.onDown} disabled={order.isLast} title='Move down' aria-label='Move down'>▼</button>
+            <label className='flex items-center gap-1 text-[11px] text-gray-500 ml-1'>
+                Weight
+                <input
+                    type='number'
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onBlur={commit}
+                    onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                    className='w-14 h-7 border border-gray-200 rounded-md px-1.5 text-xs text-gray-700 text-right focus:outline-none focus:ring-2 focus:ring-blue-300'
+                    title='Higher weight comes first in this section'
+                />
+            </label>
+        </div>
+    )
+}
+
+function NewsletterCard({ item, showByline, onOpen, order }: { item: itemprobes; showByline: boolean; onOpen: () => void; order: OrderControls }) {
     const link = item.url?.startsWith('http') ? item.url : ''
     let image = ''
     try { image = imageSrc(item.img_url) } catch { /* malformed URL: no image */ }
@@ -449,10 +569,11 @@ function NewsletterCard({ item, showByline, onOpen }: { item: itemprobes; showBy
             role='button'
             tabIndex={0}
             onClick={onOpen}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen() } }}
+            onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onOpen() } }}
             title='Click to edit'
             className='px-[15px] cursor-pointer rounded-md transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-300 min-w-0'
         >
+            <OrderBar weight={item.wtwWeight} order={order} />
             {image && (
                 <div style={{ border: `1px solid ${NL.border}` }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}

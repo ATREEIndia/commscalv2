@@ -84,6 +84,7 @@ export type itemprobes = {
   updatedAt?: number,
   smPostId?: string,
   tags?: string[],
+  wtwWeight?: number, // order within its newsletter section: higher comes first
 }
 
 export const CATEGORIES0 = [

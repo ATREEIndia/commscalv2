@@ -162,7 +162,7 @@ const Navbar = ({ current_page }: navprobes) => {
   return (
     <div className="flex h-full z-20 sm:w-[200px] min-h-[99vh] flex-col 
       bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 
-      text-white items-center rounded-r-2xl shadow-2xl border-r border-blue-700">
+      text-white items-center rounded-r-2xl shadow-2xl border-r border-blue-700 overflow-y-scroll scrollbar-hide">
 
       {/* Logo Section */}
       <div className="w-full flex flex-col items-center py-6 px-4 
