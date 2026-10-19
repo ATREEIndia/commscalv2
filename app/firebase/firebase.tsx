@@ -11,14 +11,16 @@ import { itemprobes, taskprobs } from "../constants";
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
+// Values come from .env.local (and the hosting env). They must be referenced as
+// process.env.NEXT_PUBLIC_… literally so Next.js can inline them into the browser bundle.
 const firebaseConfig = {
-  apiKey: "AIzaSyBSIEeIeqihGeK0oneBsSBr85EKPNTGInw",
-  authDomain: "commscalv2.firebaseapp.com",
-  databaseURL: "https://commscalv2-default-rtdb.firebaseio.com",
-  projectId: "commscalv2",
-  storageBucket: "commscalv2.firebasestorage.app",
-  messagingSenderId: "1021768308649",
-  appId: "1:1021768308649:web:a1bc8de6c84494b88216b8"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase
