@@ -468,6 +468,18 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
     // );
     const maxDate = formatDate(new Date());
 
+    const handleDateClick = (e: React.MouseEvent<HTMLInputElement>) => {
+        const input = e.currentTarget;
+
+        if (typeof input.showPicker === "function") {
+            try {
+                input.showPicker();
+            } catch (error) {
+                console.error("Unable to open date picker:", error);
+            }
+        }
+    };
+
 
 
 
@@ -483,10 +495,23 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Date of Publication / Event*</label>
                     <p className='text-xs px-2 text-blue-600'>Select today for Announcements / upcoming events and mention date in the description</p>
-                    <input className={`p-2 border-2 ${date_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='date'
-                        
+                    <input
+                        className={`p-2 border-2 ${date_error ? "border-red-200" : "border-gray-100"
+                            } rounded-xl shadow text-sm cursor-pointer`}
+                        type="date"
                         max={maxDate}
-                        onChange={(e) => { setDate(e.target.value) }} value={date}></input>
+                        value={date}
+                        onClick={handleDateClick}
+                        onKeyDown={(e) => {
+                            if (
+                                e.key !== "Tab" &&
+                                e.key !== "Escape"
+                            ) {
+                                e.preventDefault();
+                            }
+                        }}
+                        onChange={(e) => setDate(e.target.value)}
+                    />
                 </div>
 
                 <div className='w-full flex flex-col py-1 mt-4'>
