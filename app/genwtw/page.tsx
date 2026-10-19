@@ -67,11 +67,19 @@ const latestMonday = () => {
     const today = new Date()
     return format(isMonday(today) ? today : previousMonday(today), 'yyyy-MM-dd')
 }
+// const nextMonday = () => {
+//     const today = new Date()
+
+//     return format(
+//         isMonday(today) ? addWeeks(today, 1) : getNextMonday(today),
+//         'yyyy-MM-dd'
+//     )
+// }
 const nextMonday = () => {
     const today = new Date()
 
     return format(
-        isMonday(today) ? addWeeks(today, 1) : getNextMonday(today),
+        isMonday(today) ? today : getNextMonday(today),
         'yyyy-MM-dd'
     )
 }
