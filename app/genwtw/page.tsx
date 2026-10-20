@@ -275,8 +275,8 @@ const Page = () => {
 
                     {!user ? (
                         <p className='text-sm text-gray-500 bg-white rounded-xl border border-gray-200 p-4'>Please sign in to continue.</p>
-                    ) : !isAdmin ? (
-                        <p className='text-sm text-gray-500 bg-white rounded-xl border border-gray-200 p-4'>Only admins can generate the newsletter.</p>
+                    ) : !isRegUser ? (
+                        <p className='text-sm text-gray-500 bg-white rounded-xl border border-gray-200 p-4'>Only registered useres can generate the newsletter.</p>
                     ) : (
                         <div className='w-full w-full flex flex-col gap-4'>
                             <section className='bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 flex flex-col gap-4'>
