@@ -43,6 +43,8 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
     const [remarks, setRemarks] = useState<string>("");
     const [tags, setTags] = useState<string[]>([]);
 
+    const [mandatory_platform, setMandatory_platform] = useState<boolean>(true);
+
     const tagSuggestions = useMemo(() => buildTagSuggestions(items), [items]);
 
     const [date_error, setDate_error] = useState<boolean>(false);
@@ -51,6 +53,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
     const [url_error, seturl_error] = useState<boolean>(false);
     const [desc_error, setdesc_error] = useState<boolean>(false);
     const [mention_error, setmention_error] = useState<boolean>(false);
+    const [platform_error, setPlatform_error] = useState<boolean>(false);
 
 
 
@@ -315,8 +318,14 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
             setmention_error(false)
         }
 
+        if (mandatory_platform && platform=="") {
+            setPlatform_error(true)
+        } else {
+            setPlatform_error(false)
+        }
 
-        if (date == "" || title == "" || category == "" || description == "" || imgUrl.length < 2 || mentions.length < 1) {
+
+        if (date == "" || title == "" || category == "" || description == "" || imgUrl.length < 2 || mentions.length < 1  || (mandatory_platform && platform=="")) {
 
             alert("Please fill all the required fields");
             return;
@@ -383,6 +392,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
         setDate_error(false);
         setTitle_error(false);
         setCategory_error(false);
+        setPlatform_error(false);
     }
 
     const add_to_sheet = async () => {
@@ -479,6 +489,22 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
             }
         }
     };
+
+   useEffect(() => {
+    const catlist = [
+        "Authored Journal Articles",
+        "Authored Popular Article",
+        "Video",
+        "Featured Popular Article",
+        "Podcast",
+        "Book",
+        "Book chapters",
+        "Policy Brief",
+        "Report",
+    ];
+
+    setMandatory_platform(catlist.includes(category));
+}, [category]);
 
 
 
@@ -594,10 +620,11 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                 </div>
 
 
-                <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>
+                <div className='w-full flex items-center  py-1 mt-4 gap-5 flex-col sm:flex-row'>
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>Category *</label>
+
                         <select
                             className={`p-2 border-2 ${categorry_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`}
                             value={category}
@@ -612,9 +639,29 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                     </div>
                     <div className='w-full flex flex-col '>
 
-                        <label className='text-sm font-medium text-gray-600 px-2'>Platform</label>
-                        <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='platform' onChange={(e) => { setPlatform(e.target.value) }} value={platform}>
-                        </input>
+                        <label className='text-sm font-medium text-gray-600 px-2'>Publication Platform</label>
+                       
+
+
+                        <input
+                            className={`p-2 border-2  rounded-xl shadow text-sm ${platform_error ? "border-red-200" : "border-gray-100"} `}
+                            type="text"
+                           
+                            placeholder="Enter where it was published"
+                            list="platform"
+                            onChange={(e) => setPlatform(e.target.value)}
+                            value={platform}
+                        />
+
+
+
+
+                        {/* <input className={`p-2 border-2 border-gray-100 rounded-xl shadow text-sm  ${disabled_platform?'bg-gray-100':''}`} type='text' 
+                        disabled={disabled_platform} 
+                        placeholder='Applicable for publications only'
+                        list='platform' onChange={(e) => { setPlatform(e.target.value) }} value={platform}>
+                        </input> */}
+
                         <datalist id='platform'>
                             {platformlist.map((item, index) => (
                                 <option key={index} value={item}>{item}</option>

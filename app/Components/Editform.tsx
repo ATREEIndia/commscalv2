@@ -82,6 +82,9 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
     const [mention_error, setmention_error] = useState<boolean>(false);
     const [isshowcopy, setIsshowcopy] = useState<boolean>(false);
 
+     const [mandatory_platform, setMandatory_platform] = useState<boolean>(false);
+      const [platform_error, setPlatform_error] = useState<boolean>(false);
+
     const [click, setClick] = useState<boolean>(false);
 
     const [copyStatus, setCopyStatus] = useState('');
@@ -267,10 +270,16 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
             setmention_error(false)
         }
 
+         if (mandatory_platform && platform=="") {
+            setPlatform_error(true)
+        } else {
+            setPlatform_error(false)
+        }
 
 
 
-        if (date == "" || title == "" || category == "" || (assign_to.length > 0 && Smdeadline == "") || url == "" || description == "" || imgUrl.length < 2 || mentions.length < 1) {
+
+        if (date == "" || title == "" || category == "" || (assign_to.length > 0 && Smdeadline == "") || url == "" || description == "" || imgUrl.length < 2 || mentions.length < 1 || (mandatory_platform && platform=="")) {
             alert("Please fill all the required fields");
             return;
         }
@@ -481,6 +490,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
         setDec_error(false)
         setImgurl_error(false)
         setmention_error(false)
+        setPlatform_error(false)
 
 
     }
@@ -593,6 +603,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
             setDec_error(false)
             setImgurl_error(false)
             setmention_error(false)
+            setPlatform_error(false)
             setUploadError('')
 
             //console.log("Selected entry data=");
@@ -701,6 +712,23 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
             }
         }
     };
+
+
+       useEffect(() => {
+        const catlist = [
+            "Authored Journal Articles",
+            "Authored Popular Article",
+            "Video",
+            "Featured Popular Article",
+            "Podcast",
+            "Book",
+            "Book chapters",
+            "Policy Brief",
+            "Report",
+        ];
+    
+        setMandatory_platform(catlist.includes(category));
+    }, [category]);
 
 
 
@@ -950,7 +978,8 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>Platform</label>
-                        <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='platform' onChange={(e) => { setPlatform(e.target.value) }} value={platform}>
+
+                        <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail}  className={`p-2 border-2  rounded-xl shadow text-sm ${platform_error ? "border-red-200" : "border-gray-100"} `} type='text' list='platform' onChange={(e) => { setPlatform(e.target.value) }} value={platform}>
                         </input>
                         <datalist id='platform'>
                             {platformlist.map((item, index) => (

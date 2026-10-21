@@ -179,7 +179,7 @@ export function buildTagSuggestions(items: itemprobes[]): string[] {
 export const categorylist = [
   "Authored Journal Articles",
   "Authored Popular Article",
-  "News",
+  
   "Video",
   "Event",
   "Featured Popular Article",
