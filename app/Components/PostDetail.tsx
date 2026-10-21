@@ -244,7 +244,8 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   const [comments, setComments] = useState<SMComment[]>([])
   const [history, setHistory] = useState<HistoryEvent[]>([])
   const [loading, setLoading] = useState(true)
-  
+  const [remarks, setRemarks] = useState('')
+
 
   // Edit states
   const [editingTitle, setEditingTitle] = useState(false)
@@ -307,6 +308,21 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     })
     return () => unsub()
   }, [postId])
+
+  // Remarks live on the source task, not the post
+  const sourceTaskId = post?.sourceTaskId
+  useEffect(() => {
+    if (!sourceTaskId) {
+      setRemarks('')
+      return
+    }
+    const unsub = onSnapshot(
+      doc(firestore, 'tasks', sourceTaskId),
+      (snap) => setRemarks((snap.data()?.remarks as string | undefined) ?? ''),
+      (err) => console.error('task remarks listener:', err)
+    )
+    return () => unsub()
+  }, [sourceTaskId])
 
   useEffect(() => {
     const q = query(collection(firestore, 'posts', postId, 'comments'), orderBy('createdAt', 'asc'))
@@ -994,7 +1010,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                   </div>
 
                   <p className="text-[11px] sm:text-xs p-2 bg-amber-100 rounded-md break-words">
-                    communications@atree.org and you will be copied by default. Press Enter or
+                    Press Enter or
                     comma after each address.
                   </p>
 
@@ -1183,6 +1199,14 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             )}
           </div>
         </div>
+
+        {/* ── Remarks ── */}
+        {remarks.trim() && (
+          <section className='bg-amber-100 p-2 px-4 border-l-2 border-amber-500'>
+            <h2 className="text-base font-bold text-gray-800 mb-3">Remarks</h2>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">{remarks}</p>
+          </section>
+        )}
 
         {/* ── Images ── */}
         <section>
