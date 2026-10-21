@@ -25,8 +25,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Your session has expired. Please sign in again.' }, { status: 401 })
   }
   const userDoc = email ? await adminDb.collection('reg_users').doc(email).get() : null
-  if (userDoc?.data()?.role !== 'admin') {
-    return NextResponse.json({ error: 'Only admins can generate the newsletter.' }, { status: 403 })
+  if (userDoc?.data()?.role !== 'admin' || userDoc?.data()?.role !== 'Editor') {
+    return NextResponse.json({ error: 'Only admins / editor can generate the newsletter.' }, { status: 403 })
   }
 
   const body = await req.json().catch(() => null)
