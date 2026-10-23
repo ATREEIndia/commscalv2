@@ -26,6 +26,8 @@ interface Props {
   postId: string
   postTitle: string
   onChange: (urls: string[]) => void
+  /** Called with the current URLs once all in-flight uploads have finished (after at least one succeeded) */
+  onUploadsComplete?: (urls: string[]) => void
 }
 
 const genId = () => Math.random().toString(36).slice(2)
@@ -131,7 +133,7 @@ function InsertButton({ onClick }: { onClick: () => void }) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function ImageSlotList({ initialUrls, postId, postTitle, onChange }: Props) {
+export default function ImageSlotList({ initialUrls, postId, postTitle, onChange, onUploadsComplete }: Props) {
   const [slots, setSlots] = useState<SlotState[]>(() => {
     const urls = initialUrls.length ? initialUrls : ['']
     return urls.map((url) => ({ id: genId(), url, status: 'idle' as SlotStatus }))
@@ -141,10 +143,19 @@ export default function ImageSlotList({ initialUrls, postId, postTitle, onChange
   const pendingIdRef = useRef<string | null>(null)
   const postTitleRef = useRef(postTitle)
   const onChangeRef = useRef(onChange)
+  const onUploadsCompleteRef = useRef(onUploadsComplete)
+  // Set when an upload succeeds; flushed once no slot is still uploading
+  const uploadSucceededRef = useRef(false)
 
   useEffect(() => { postTitleRef.current = postTitle }, [postTitle])
   useEffect(() => { onChangeRef.current = onChange })
+  useEffect(() => { onUploadsCompleteRef.current = onUploadsComplete })
   useEffect(() => { onChangeRef.current(slots.map((s) => s.url)) }, [slots])
+  useEffect(() => {
+    if (!uploadSucceededRef.current || slots.some((s) => s.status === 'uploading')) return
+    uploadSucceededRef.current = false
+    onUploadsCompleteRef.current?.(slots.map((s) => s.url))
+  }, [slots])
 
   // ── Upload helpers ───────────────────────────────────────────────────────────
   const triggerUpload = (slotId: string) => {
@@ -175,6 +186,7 @@ export default function ImageSlotList({ initialUrls, postId, postTitle, onChange
       }
 
       if (!res.ok) throw new Error((data.error as string) || 'Upload failed')
+      uploadSucceededRef.current = true
       setSlots((prev) =>
         prev.map((s) => s.id === slotId ? { ...s, url: data.filelink as string, status: 'success' } : s)
       )

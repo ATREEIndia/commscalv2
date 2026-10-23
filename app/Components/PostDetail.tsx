@@ -572,11 +572,11 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     }
   }
 
-  const saveImages = async () => {
+  const saveImages = async (urls: string[] = imagesDraft) => {
     setSaving(true)
     try {
       const current = post.images || []
-      const trimmed = imagesDraft.filter((u) => u.trim())
+      const trimmed = urls.filter((u) => u.trim())
       const oldSet = new Set(current)
       const newSet = new Set(trimmed)
       const added = trimmed.filter((u) => !oldSet.has(u))
@@ -1215,11 +1215,11 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             {editingImages ? (
               <div className="flex gap-2">
                 <button
-                  onClick={saveImages}
+                  onClick={() => saveImages()}
                   disabled={saving}
                   className="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
-                  Save
+                  {saving ? 'Saving…' : 'Save'}
                 </button>
                 <button
                   onClick={() => setEditingImages(false)}
@@ -1240,9 +1240,15 @@ export default function PostDetail({ postId, user, onClose }: Props) {
           {editingImages ? (
             <div>
               <p className="text-xs text-gray-400 mb-2">
-                Paste a Google Drive link or click <strong>Upload</strong> to upload directly. Uploaded files are shared automatically.
+                Paste a Google Drive link or click <strong>Upload</strong> to upload directly. Uploaded files are shared and saved automatically.
               </p>
-              <ImageSlotList initialUrls={imagesDraft} postId={postId} postTitle={post.title} onChange={setImagesDraft} />
+              <ImageSlotList
+                initialUrls={imagesDraft}
+                postId={postId}
+                postTitle={post.title}
+                onChange={setImagesDraft}
+                onUploadsComplete={(urls) => saveImages(urls)}
+              />
             </div>
           ) : (post.images?.length ?? 0) > 0 ? (
             <>
