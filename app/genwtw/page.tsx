@@ -200,6 +200,16 @@ const Page = () => {
         }
     }
 
+    const setSingle = async (item: itemprobes, single: boolean) => {
+        if (!item.id || single === !!item.wtwSingle) return
+        try {
+            await update(ref(db, `items/${item.id}`), { wtwSingle: single })
+        } catch (error) {
+            console.error('Saving single row failed:', error)
+            alert('Could not save the single row setting. Please try again.')
+        }
+    }
+
     // Item open in the edit form
     const [editing, setEditing] = useState<itemprobes | null>(null)
 
@@ -394,23 +404,24 @@ const Page = () => {
                                                 <h3 className='px-[15px] text-white text-lg sm:text-[22px] leading-normal' style={{ backgroundColor: NL.accent }}>
                                                     {category}
                                                 </h3>
-                                                {/* Two items per row; a lone last item spans the row, like the email */}
-                                                {chunkPairs(list).map((row, r) => (
+                                                {/* Two items per row; a lone item (or one marked single) spans the row, like the email */}
+                                                {chunkRows(list).map((row, r) => (
                                                     <React.Fragment key={r}>
                                                         {r > 0 && <div className='mx-[15px] my-2.5' style={{ borderTop: `3px solid ${NL.divider}` }} />}
                                                         <div className={`grid grid-cols-1 ${row.length > 1 ? 'sm:grid-cols-2' : ''} gap-y-4 pt-5`}>
-                                                            {row.map((item, c) => (
+                                                            {row.map(({ item, index }) => (
                                                                 <NewsletterCard
                                                                     key={item.id}
                                                                     item={item}
                                                                     showByline={BYLINE_CATEGORIES.includes(category)}
                                                                     onOpen={() => setEditing(item)}
                                                                     order={{
-                                                                        isFirst: r * 2 + c === 0,
-                                                                        isLast: r * 2 + c === list.length - 1,
-                                                                        onUp: () => moveItem(list, r * 2 + c, -1),
-                                                                        onDown: () => moveItem(list, r * 2 + c, 1),
+                                                                        isFirst: index === 0,
+                                                                        isLast: index === list.length - 1,
+                                                                        onUp: () => moveItem(list, index, -1),
+                                                                        onDown: () => moveItem(list, index, 1),
                                                                         onWeight: (w) => setWeight(item, w),
+                                                                        onSingle: (s) => setSingle(item, s),
                                                                     }}
                                                                 />
                                                             ))}
@@ -511,9 +522,22 @@ const Page = () => {
     )
 }
 
-const chunkPairs = <T,>(list: T[]): T[][] => {
-    const rows: T[][] = []
-    for (let i = 0; i < list.length; i += 2) rows.push(list.slice(i, i + 2))
+// Pairs items into rows of two; an item marked wtwSingle always gets a row of its own.
+const chunkRows = (list: itemprobes[]) => {
+    const rows: { item: itemprobes; index: number }[][] = []
+    let open: { item: itemprobes; index: number }[] | null = null
+    list.forEach((item, index) => {
+        if (item.wtwSingle) {
+            rows.push([{ item, index }])
+            open = null
+        } else if (open) {
+            open.push({ item, index })
+            open = null
+        } else {
+            open = [{ item, index }]
+            rows.push(open)
+        }
+    })
     return rows
 }
 
@@ -525,10 +549,11 @@ type OrderControls = {
     onUp: () => void
     onDown: () => void
     onWeight: (weight: number) => void
+    onSingle: (single: boolean) => void
 }
 
-// Move up/down and the weight itself. Clicks here don't open the edit form.
-function OrderBar({ weight, order }: { weight?: number; order: OrderControls }) {
+// Move up/down, the weight and the single-row toggle. Clicks here don't open the edit form.
+function OrderBar({ weight, single, order }: { weight?: number; single?: boolean; order: OrderControls }) {
     const [draft, setDraft] = useState(weight?.toString() ?? '')
     useEffect(() => { setDraft(weight?.toString() ?? '') }, [weight])
 
@@ -556,6 +581,15 @@ function OrderBar({ weight, order }: { weight?: number; order: OrderControls }) 
                     title='Higher weight comes first in this section'
                 />
             </label>
+            <label className='flex items-center gap-1 text-[11px] text-gray-500 ml-1 cursor-pointer' title='Keep this item alone on its own row'>
+                <input
+                    type='checkbox'
+                    checked={!!single}
+                    onChange={(e) => order.onSingle(e.target.checked)}
+                    className='w-3.5 h-3.5 accent-blue-600'
+                />
+                Single
+            </label>
         </div>
     )
 }
@@ -573,7 +607,7 @@ function NewsletterCard({ item, showByline, onOpen, order }: { item: itemprobes;
             title='Click to edit'
             className='px-[15px] cursor-pointer rounded-md transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-300 min-w-0'
         >
-            <OrderBar weight={item.wtwWeight} order={order} />
+            <OrderBar weight={item.wtwWeight} single={item.wtwSingle} order={order} />
             {image && (
                 <div style={{ border: `1px solid ${NL.border}` }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}

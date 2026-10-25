@@ -85,6 +85,7 @@ export type itemprobes = {
   smPostId?: string,
   tags?: string[],
   wtwWeight?: number, // order within its newsletter section: higher comes first
+  wtwSingle?: boolean, // keep this item alone on its own row in the newsletter
 }
 
 export const CATEGORIES0 = [
