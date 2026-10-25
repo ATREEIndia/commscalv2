@@ -2,8 +2,8 @@
 // /api/genwtw route; the route only ever sends to the list IDs defined here.
 export const WTW_AUDIENCES = {
   test: { label: 'Send test', mode: 'test', listIds: [128], description: 'Test list only' },
-  internal: { label: 'Send internal', mode: 'send', listIds: [4,10,78,109,90], description: 'Internal lists' },
-  global: { label: 'Send global', mode: 'send', listIds: [128], description: 'All subscribers (internal + global lists)' },
+  internal: { label: 'Send internal', mode: 'send', listIds: [134], description: 'Internal lists' },
+  global: { label: 'Send global', mode: 'send', listIds: [135,134], description: 'All subscribers (internal + global lists)' },
 } as const
 
 export type WtwAudience = keyof typeof WTW_AUDIENCES
