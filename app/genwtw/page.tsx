@@ -25,19 +25,26 @@ const AUDIENCE_STYLE: Record<WtwAudience, { selected: string; button: string }> 
 // Order of sections in the newsletter. Categories not listed here follow, in
 // the order of `categorylist`. Sections with no items are skipped.
 const CATEGORY_ORDER = [
-    'Authored Journal Articles',
+    'Authored by ATREE',
     'Book chapters',
-    'Authored Popular Article',
     'Report',
     'Featured Popular Article',
     'Announcement',
-    'Awards and Recognitions',
     'Event',
     'Podcast',
 ]
 
 // Only these sections show the publication (platform) and authors (mention).
-const BYLINE_CATEGORIES = ['Authored Journal Articles','Authored Popular Article', 'Featured Popular Article', 'Book chapters']
+const BYLINE_CATEGORIES = ['Authored by ATREE', 'Featured Popular Article', 'Book chapters']
+
+// Categories shown together under one newsletter section.
+const MERGED_SECTIONS: Record<string, string> = {
+    'Authored Journal Articles': 'Authored by ATREE',
+    'Authored Popular Article': 'Authored by ATREE',
+    'Talk@ATREE': 'Announcement',
+    'Awards and Recognitions': 'Announcement',
+}
+const sectionOf = (category?: string) => (category && MERGED_SECTIONS[category]) || category || 'Uncategorised'
 
 // Google Drive share links aren't image URLs; use Drive's thumbnail endpoint instead.
 const imageSrc = (url?: string) => {
@@ -134,7 +141,7 @@ const Page = () => {
     const groups = useMemo(() => {
         const map = new Map<string, itemprobes[]>()
         weekItems.forEach((item) => {
-            const key = item.category || 'Uncategorised'
+            const key = sectionOf(item.category)
             map.set(key, [...(map.get(key) ?? []), item])
         })
         return Array.from(map.entries())
