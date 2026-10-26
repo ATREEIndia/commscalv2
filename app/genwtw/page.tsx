@@ -42,6 +42,7 @@ const MERGED_SECTIONS: Record<string, string> = {
     'Authored Journal Articles': 'Authored by ATREE',
     'Authored Popular Article': 'Authored by ATREE',
     'Talk@ATREE': 'Announcement',
+    'Video': 'Announcement',
     'Awards and Recognitions': 'Announcement',
 }
 const sectionOf = (category?: string) => (category && MERGED_SECTIONS[category]) || category || 'Uncategorised'
@@ -123,13 +124,15 @@ const Page = () => {
         return { from: addDays(d, -7), to: addDays(d, -1), monday: isMonday(d) }
     }, [date])
 
-    // Items submitted in the covered week, grouped by category.
+    // Items submitted in the covered week, grouped by category. Items marked
+    // wtw_status: false (skipped) are left out.
     const weekItems = useMemo(() => {
         if (!items || !coverage) return []
         const start = startOfDay(coverage.from).getTime()
         const end = endOfDay(coverage.to).getTime()
         return items
             .filter((item) => {
+                if (item.wtw_status === false) return false
                 const added = addedDate(item)?.getTime()
                 return added !== undefined && added >= start && added <= end
             })

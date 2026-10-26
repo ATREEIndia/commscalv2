@@ -230,6 +230,20 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
             });
     }
 
+    // Leaves the item out of the WTW newsletter (registered users only).
+    const skipWtw = async () => {
+        if (!isRegUser || !selectedEntry?.id) return
+        try {
+            await update(ref(db, '/items/' + selectedEntry.id), { wtw_status: false })
+            SetWTWStatus(false)
+            showToast ? showToast("Item skipped from WTW") : ""
+            changeformvisibility()
+        } catch (error) {
+            console.error('Skipping WTW failed:', error)
+            alert('Could not skip the item. Please try again.')
+        }
+    }
+
     const processDBpush = () => {
 
         if (!date) {
@@ -1076,6 +1090,10 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
                     <div className='px-4 py-2 border-2 border-orange-300 shadow hover:bg-orange-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { changeformvisibility(); }}>Cancel</div>
 
                     <div className='px-4 py-2 border-2 border-red-300 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { setIscnfwindowopen(true) }}>Delete</div>
+
+                    {isRegUser && selectedEntry?.wtw_status !== false && (
+                        <div className='px-4 py-2 border-2 border-gray-300 shadow hover:bg-gray-500 hover:text-white rounded-2xl cursor-pointer text-center' title='Leave this item out of the WTW newsletter' onClick={() => { skipWtw() }}>Skip WTW</div>
+                    )}
 
                     <div className='px-4 py-2 border-2 border-green-300 shadow hover:bg-green-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { processDBpush() }}>Update</div>
                 </div>
