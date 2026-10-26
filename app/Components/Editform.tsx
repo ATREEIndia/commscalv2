@@ -331,7 +331,8 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
             customsm_status = 'Working'
         }
 
-        if (sm_status.length > 1 && assigned_toString.length < 1) {
+        // "Working" only means someone is on it; other statuses (No Post, Posted, …) are kept.
+        if (sm_status === 'Working' && assigned_toString.length < 1) {
             customsm_status = ''
         }
 
