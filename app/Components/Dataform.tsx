@@ -318,14 +318,14 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
             setmention_error(false)
         }
 
-        if (mandatory_platform && platform=="") {
+        if (mandatory_platform && platform == "") {
             setPlatform_error(true)
         } else {
             setPlatform_error(false)
         }
 
 
-        if (date == "" || title == "" || category == "" || description == "" || imgUrl.length < 2 || mentions.length < 1  || (mandatory_platform && platform=="")) {
+        if (date == "" || title == "" || category == "" || description == "" || imgUrl.length < 2 || mentions.length < 1 || (mandatory_platform && platform == "")) {
 
             alert("Please fill all the required fields");
             return;
@@ -490,21 +490,21 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
         }
     };
 
-   useEffect(() => {
-    const catlist = [
-        "Authored Journal Articles",
-        "Authored Popular Article",
-        "Video",
-        "Featured Popular Article",
-        "Podcast",
-        "Book",
-        "Book chapters",
-        "Policy Brief",
-        "Report",
-    ];
+    useEffect(() => {
+        const catlist = [
+            "Authored Journal Articles",
+            "Authored Popular Article",
+            "Video",
+            "Featured Popular Article",
+            "Podcast",
+            "Book",
+            "Book chapters",
+            "Policy Brief",
+            "Report",
+        ];
 
-    setMandatory_platform(catlist.includes(category));
-}, [category]);
+        setMandatory_platform(catlist.includes(category));
+    }, [category]);
 
 
 
@@ -616,6 +616,9 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Description*</label>
+                    <p className='text-xs text-blue-700 px-2'>
+                        Provide a brief description of the publication or event. Please write any instructions for the Communications team in the Remarks field only.
+                    </p>
                     <FormattedTextarea className={`w-full p-2 border-2 ${desc_error ? 'border-red-200' : 'border-gray-100'} rounded-xl shadow text-sm`} onChange={setDescription} value={description} />
                 </div>
 
@@ -640,13 +643,13 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>Publication Platform</label>
-                       
+
 
 
                         <input
                             className={`p-2 border-2  rounded-xl shadow text-sm ${platform_error ? "border-red-200" : "border-gray-100"} `}
                             type="text"
-                           
+
                             placeholder="Enter where it was published"
                             list="platform"
                             onChange={(e) => setPlatform(e.target.value)}

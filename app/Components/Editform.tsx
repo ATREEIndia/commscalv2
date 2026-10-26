@@ -952,6 +952,9 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Description</label>
+                     <p className='text-xs text-blue-700 px-2'>
+                        Provide a brief description of the publication or event. Please write any instructions for the Communications team in the Remarks field only.
+                    </p>
                     <FormattedTextarea disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`w-full p-2 border-2 rounded-xl shadow text-sm ${dec_error ? 'border-red-500' : "border-gray-100"}`} onChange={setDescription} value={description} />
                 </div>
 
