@@ -105,15 +105,25 @@ export default function SmCalPage() {
 
  
 
+  // Tasks a post already points to (by id, or by title for older tasks keyed on the title),
+  // even when the task itself lacks linkedSmPostId.
+  const postedTaskKeys = useMemo(
+    () => new Set(posts.map((p) => p.sourceTaskId).filter((k): k is string => !!k)),
+    [posts]
+  )
+  const hasPost = (t: taskprobs) =>
+    !!t.linkedSmPostId || (!!t.id && postedTaskKeys.has(t.id)) || (!!t.title && postedTaskKeys.has(t.title))
+
   const eligibleTasks = useMemo(
     () =>
       tasks.filter(
         (t) =>
           (t.assigned_to?.length ?? 0) > 0 &&
           t.current_status !== 'Posted' &&
-          !t.linkedSmPostId
+          !hasPost(t)
       ),
-    [tasks]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tasks, postedTaskKeys]
   )
 
   const visibleTasks = useMemo(() => eligibleTasks.filter((t) => !t.hidden), [eligibleTasks])
@@ -149,6 +159,22 @@ export default function SmCalPage() {
     //setPrefilledDate(dayjs(task.date).format('YYYY-MM-DDT09:00'))
     setShowNewPost(true)
   }
+
+  // Opened from the Database edit form's "Add to SM Cal now?" prompt (?newPostFor=<item id>).
+  // Waits until the task has loaded, since it may have been saved just before navigating here.
+  const [newPostFor, setNewPostFor] = useState<string | null>(null)
+  useEffect(() => {
+    setNewPostFor(new URLSearchParams(window.location.search).get('newPostFor'))
+  }, [])
+  useEffect(() => {
+    if (!newPostFor) return
+    const task = tasks.find((t) => t.id === newPostFor)
+    if (!task) return
+    setNewPostFor(null)
+    router.replace('/smcal')
+    if (!hasPost(task)) createPostFromTask(task)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newPostFor, tasks])
   ///////////////////////////////////////////////////////////////
   const [taskPanelHeight, setTaskPanelHeight] = useState(260);
 

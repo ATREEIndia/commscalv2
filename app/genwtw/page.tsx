@@ -517,6 +517,7 @@ const Page = () => {
                 user={user?.displayName || 'user not found'}
                 userEmail={user?.email || ''}
                 items={items ?? []}
+                showSkipWTW={true}
             />
         </div>
     </div>

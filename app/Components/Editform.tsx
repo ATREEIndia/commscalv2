@@ -4,7 +4,8 @@ import { auth, db, firestore } from '../firebase/firebase';
 import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
 import { add, format } from 'date-fns';
 import { onAuthStateChanged } from 'firebase/auth';
-import { addDoc, collection, deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, limit, query as fsQuery, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 import { submitToSheet } from '../Posttosheet';
 import { UserMyAppContext } from '../Context/MyAppContext';
 import TagInput from './TagInput';
@@ -15,6 +16,7 @@ type Props = {
 
     user?: string,
     userEmail?: string,
+    showSkipWTW?:boolean,
 
     changeformvisibility: () => void | null,
     selectedEntry?: itemprobes | null
@@ -30,11 +32,12 @@ function formatTimestamp(ms: number): string {
     });
 }
 
-const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEmail = "", items = [] }: Props) => {
+const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSkipWTW=false, userEmail = "", items = [] }: Props) => {
     const { users, loading } = useUsers();
     const userlist = users.map(user => user.email);
 
     const { isRegUser, role } = UserMyAppContext()
+    const router = useRouter()
 
     const [username, setUsername] = useState<string | null>("null");
     useEffect(() => {
@@ -218,11 +221,14 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
             updatePayload.updatedAt = Date.now();
         }
 
+        const assignees = [...assign_to]
+
         update(dataRef, updatePayload)
-            .then(() => {
+            .then(async () => {
                 //console.log('Data added successfully!');
-                addToTask({ title, description, url, assigned_to: assign_to, createdon: new Date().toISOString().split('T')[0] })
+                await addToTask({ title, description, url, assigned_to: assignees, createdon: new Date().toISOString().split('T')[0] })
                 // clearform();
+                if (mayOfferSmCal) offerSmCalPost()
 
             })
             .catch((error) => {
@@ -352,14 +358,46 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
         });
         update_Sheet(date, title, sm_status);
 
-        changeformvisibility();
+        // When SM Cal may be offered, the form stays open until offerSmCalPost decides.
+        if (!mayOfferSmCal) changeformvisibility();
         setClick(!click);
 
     }
 
 
 
-    const addToTask = ({ title, description, url, assigned_to }: taskprobs) => {
+    // People added in this edit (assigned_to is stored as "a@x, b@y").
+    const previouslyAssigned = (selectedEntry?.assigned_to || '').split(',').map((e) => e.trim()).filter(Boolean)
+    const newlyAssigned = assign_to.some((e) => !previouslyAssigned.includes(e))
+    const mayOfferSmCal = isRegUser && newlyAssigned && sm_status !== 'Posted' && !!selectedEntry?.id && !selectedEntry?.smPostId
+
+    const [smCalPrompt, setSmCalPrompt] = useState(false)
+
+    // After someone is assigned, offer to create the SM Cal post now if the item has none yet;
+    // otherwise close the form as a normal save would.
+    const offerSmCalPost = async () => {
+        const id = selectedEntry?.id
+        try {
+            if (!id) throw new Error('No item id')
+            const task = await getDoc(doc(firestore, 'tasks', id))
+            const posts = await getDocs(fsQuery(collection(firestore, 'posts'), where('sourceTaskId', 'in', Array.from(new Set([id, selectedEntry?.title || id]))), limit(1)))
+            if (!task.data()?.linkedSmPostId && posts.empty) {
+                setSmCalPrompt(true)
+                return
+            }
+        } catch (error) {
+            console.error('Checking for an SM Cal post failed:', error)
+        }
+        changeformvisibility()
+    }
+
+    const answerSmCalPrompt = (addNow: boolean) => {
+        setSmCalPrompt(false)
+        changeformvisibility()
+        if (addNow && selectedEntry?.id) router.push(`/smcal?newPostFor=${encodeURIComponent(selectedEntry.id)}`)
+    }
+
+    const addToTask = async ({ title, description, url, assigned_to }: taskprobs) => {
 
 
 
@@ -369,7 +407,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
             const taskref = doc(firestore, "tasks", uid);
 
 
-            setDoc(taskref, {
+            await setDoc(taskref, {
 
                 date: date,
                 createdon: new Date().toISOString().split('T')[0],
@@ -389,6 +427,9 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
                 // completed_by is left out so editing the entry doesn't wipe who has finished the task
                 current_status: sm_status,
+
+                // The item already has a post: link this task to it so SM Cal doesn't offer to create another
+                ...(selectedEntry?.smPostId ? { linkedSmPostId: selectedEntry.smPostId } : {}),
 
                 // merge keeps fields set elsewhere (e.g. linkedSmPostId from SM Cal)
             }, { merge: true }).then(() => {
@@ -1091,7 +1132,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
                     <div className='px-4 py-2 border-2 border-red-300 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { setIscnfwindowopen(true) }}>Delete</div>
 
-                    {isRegUser && selectedEntry?.wtw_status !== false && (
+                    {isRegUser && selectedEntry?.wtw_status !== false && showSkipWTW && (
                         <div className='px-4 py-2 border-2 border-gray-300 shadow hover:bg-gray-500 hover:text-white rounded-2xl cursor-pointer text-center' title='Leave this item out of the WTW newsletter' onClick={() => { skipWtw() }}>Skip WTW</div>
                     )}
 
@@ -1102,6 +1143,26 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, userEm
 
 
             </div>
+
+            {smCalPrompt && (
+                <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40' role='dialog' aria-modal='true' aria-labelledby='smcal-prompt-title'>
+                    <div className='bg-white rounded-2xl shadow-2xl w-full max-w-md p-5 sm:p-6 flex flex-col gap-4'>
+                        <h2 id='smcal-prompt-title' className='text-lg font-bold text-gray-800'>Add to SM Cal now?</h2>
+                        <div className='text-sm text-gray-600 flex flex-col gap-1'>
+                            <p>There is no SM Cal post for <b>{title}</b> yet.</p>
+                            <p className='text-xs text-gray-500'>If you skip this, it stays under Pending Tasks on SM Cal so you can create the post later.</p>
+                        </div>
+                        <div className='flex flex-col-reverse sm:flex-row sm:justify-end gap-2'>
+                            <button type='button' onClick={() => answerSmCalPrompt(false)} className='px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50'>
+                                Not now
+                            </button>
+                            <button type='button' autoFocus onClick={() => answerSmCalPrompt(true)} className='px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700'>
+                                Add to SM Cal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className={`absolute top-0 left-0 w-full border-2 h-full justify-center  z-40 ${iscnfwindowopen ? 'flex' : 'hidden'}`}>
                 <div className='bg-black absolute top-0 right-0 w-full h-full z-41 opacity-35'></div>
