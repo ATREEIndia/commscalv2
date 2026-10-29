@@ -1208,6 +1208,89 @@ export default function PostDetail({ postId, user, onClose }: Props) {
           </section>
         )}
 
+
+         {/* ── Actions ── */}
+        <section className="border-t border-gray-100 pt-6">
+          <h2 className="text-base font-bold text-gray-800 mb-3">Actions</h2>
+          <div className="flex flex-wrap gap-3">
+            {/* Approve / revoke — anyone signed in */}
+            <button
+              onClick={toggleApprove}
+              disabled={!user || approving}
+              className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all
+                ${myApproval
+                  ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                } disabled:opacity-40 disabled:cursor-not-allowed`}
+            >
+              {approving ? 'Saving…' : myApproval ? '✓ Approved — click to revoke' : 'Approve'}
+            </button>
+
+            {/* Mark as Posted: assignee always; any registered user once out of draft */}
+            {canChangeStatus && post.status !== 'posted' && (
+              <button
+                onClick={() => setStatus('posted')}
+                disabled={!hasApproval || !!statusSaving}
+                title={!hasApproval ? 'Requires at least one approval' : undefined}
+                className="px-4 py-2 rounded-xl text-sm font-medium border bg-green-50 text-green-700 border-green-200
+                  hover:bg-green-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-green-50"
+              >
+                {statusSaving === 'posted' ? 'Updating…' : 'Mark as Posted'}
+              </button>
+            )}
+
+            {/* Set to Scheduled: same rule as above */}
+            {/* {canChangeStatus && post.status !== 'scheduled' && (
+              <button
+                onClick={() => setStatus('scheduled')}
+                disabled={!hasApproval || !!statusSaving}
+                title={!hasApproval ? 'Requires at least one approval' : undefined}
+                className="px-4 py-2 rounded-xl text-sm font-medium border bg-purple-50 text-purple-700 border-purple-200
+                  hover:bg-purple-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-purple-50"
+              >
+                {statusSaving === 'scheduled' ? 'Updating…' : 'Set to Scheduled'}
+              </button>
+            )} */}
+
+            {statusError && (
+              <p className="w-full text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mt-1">
+                {statusError}
+              </p>
+            )}
+
+            {canChangeStatus && !hasApproval && (
+              <p className="w-full text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-1">
+                Scheduling and posting require at least one approval.
+              </p>
+            )}
+
+            {/* Assignee-only: revert to draft + delete */}
+            {isAssignee && (
+              <>
+                {post.status !== 'draft' && (
+                  <button
+                    onClick={() => setStatus('draft')}
+                    disabled={!!statusSaving}
+                    className="px-4 py-2 rounded-xl text-sm font-medium border bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {statusSaving === 'draft' ? 'Updating…' : 'Revert to Draft'}
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="px-4 py-2 rounded-xl text-sm font-medium border bg-red-50 text-red-600 border-red-200 hover:bg-red-100 transition-all"
+                >
+                  Delete Post
+                </button>
+              </>
+            )}
+          </div>
+        </section>
+
+
+
+
+
         {/* ── Images ── */}
         <section>
           <div className="flex items-center justify-between mb-3">
