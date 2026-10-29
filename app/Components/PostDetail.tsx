@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Mail, X } from 'lucide-react'
+import { Download, Mail, X } from 'lucide-react'
 import {
   addDoc,
   arrayUnion,
@@ -1294,7 +1294,12 @@ export default function PostDetail({ postId, user, onClose }: Props) {
         {/* ── Images ── */}
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold text-gray-800">Images</h2>
+            <div className='flex gap-5 items-center'>
+              <h2  className="text-base font-bold text-gray-800">Images</h2>
+            {isRegUser && 
+            <Download onClick={finishPosting} size={15} className='active:scale-90 hover:text-blue-600 hover:font-black cursor-pointer'/>}
+            </div>
+            
             {editingImages ? (
               <div className="flex gap-2">
                 <button
