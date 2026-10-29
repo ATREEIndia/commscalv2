@@ -124,20 +124,38 @@ const Page = () => {
         return { from: addDays(d, -7), to: addDays(d, -1), monday: isMonday(d) }
     }, [date])
 
-    // Items submitted in the covered week, grouped by category. Items marked
-    // wtw_status: false (skipped) are left out.
-    const weekItems = useMemo(() => {
-        if (!items || !coverage) return []
+    // Items submitted in the covered week. Items marked wtw_status: false
+    // (skipped) are kept apart so they can be added back.
+    const { weekItems, skippedItems } = useMemo(() => {
+        if (!items || !coverage) return { weekItems: [], skippedItems: [] }
         const start = startOfDay(coverage.from).getTime()
         const end = endOfDay(coverage.to).getTime()
-        return items
+        const inWeek = items
             .filter((item) => {
-                if (item.wtw_status === false) return false
                 const added = addedDate(item)?.getTime()
                 return added !== undefined && added >= start && added <= end
             })
             .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
+        return {
+            weekItems: inWeek.filter((item) => item.wtw_status !== false),
+            skippedItems: inWeek.filter((item) => item.wtw_status === false),
+        }
     }, [items, coverage])
+
+    // Puts a skipped item back in the newsletter by clearing its wtw_status.
+    const [restoring, setRestoring] = useState<string | null>(null)
+    const unskip = async (item: itemprobes) => {
+        if (!item.id || restoring) return
+        setRestoring(item.id)
+        try {
+            await update(ref(db, `items/${item.id}`), { wtw_status: null })
+        } catch (error) {
+            console.error('Adding the item back failed:', error)
+            alert('Could not add the item back. Please try again.')
+        } finally {
+            setRestoring(null)
+        }
+    }
 
     // [category, items] in newsletter order; empty categories never appear.
     // Within a category: higher wtwWeight first, then items without a weight by date.
@@ -374,6 +392,47 @@ const Page = () => {
                                     {running ? 'Sending…' : `Send now · ${WTW_AUDIENCES[audience].label.replace(/^Send /, '')}`}
                                 </button>
                             </section>
+
+                            {/* Items skipped from this newsletter, collapsed by default */}
+                            {skippedItems.length > 0 && (
+                                <details className='group bg-white rounded-2xl border border-gray-200 shadow-sm'>
+                                    <summary className='flex items-center justify-between gap-2 px-4 sm:px-6 py-3 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden'>
+                                        <span className='text-sm font-semibold text-gray-800'>
+                                            Skipped items
+                                            <span className='ml-2 text-xs font-medium text-gray-600 bg-gray-100 border border-gray-200 rounded-full px-2 py-0.5'>{skippedItems.length}</span>
+                                        </span>
+                                        <svg className='w-4 h-4 text-gray-500 transition-transform group-open:rotate-180' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'>
+                                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                                        </svg>
+                                    </summary>
+                                    <div className='px-4 sm:px-6 pb-4 flex flex-col gap-2'>
+                                        <p className='text-xs text-gray-500'>These were added this week but are left out of the newsletter.</p>
+                                        <ul className='flex flex-col divide-y divide-gray-100 border border-gray-100 rounded-xl'>
+                                            {skippedItems.map((item) => (
+                                                <li key={item.id} className='flex flex-col sm:flex-row sm:items-center gap-2 px-3 py-2'>
+                                                    <button
+                                                        type='button'
+                                                        onClick={() => setEditing(item)}
+                                                        className='flex-1 min-w-0 text-left'
+                                                        title='Click to edit'
+                                                    >
+                                                        <span className='block text-sm text-gray-800 truncate'>{item.title}</span>
+                                                        <span className='block text-[11px] text-gray-500'>{sectionOf(item.category)}</span>
+                                                    </button>
+                                                    <button
+                                                        type='button'
+                                                        onClick={() => unskip(item)}
+                                                        disabled={!!restoring}
+                                                        className='self-start sm:self-auto flex-shrink-0 px-3 py-1.5 text-xs font-medium text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed'
+                                                    >
+                                                        {restoring === item.id ? 'Adding…' : 'Add back'}
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </details>
+                            )}
 
                             {result && (
                                 <section className={`rounded-2xl border p-4 sm:p-5 flex flex-col gap-2 ${result.ok ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
