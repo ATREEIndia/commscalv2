@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { google } from 'googleapis'
 import { Readable } from 'stream'
 import { adminDb, getAdminAuth } from '../../../../lib/firebaseAdmin'
+import { GUEST_ROLE, guestLevel } from '../../../../lib/access'
 
 export const runtime = 'nodejs'
 
@@ -23,6 +24,11 @@ export async function GET(
     const { email } = await getAdminAuth().verifyIdToken(idToken)
     const regUser = email ? await adminDb.collection('reg_users').doc(email).get() : null
     if (!regUser?.exists) return NextResponse.json({ error: 'Not allowed.' }, { status: 403 })
+    // Guests download post media only if they can edit SM Cal.
+    const data = regUser.data()
+    if (data?.role === GUEST_ROLE && guestLevel(data.guestAccess, 'smcal') !== 'edit') {
+      return NextResponse.json({ error: 'Not allowed.' }, { status: 403 })
+    }
   } catch {
     return NextResponse.json({ error: 'Your session has expired. Please sign in again.' }, { status: 401 })
   }

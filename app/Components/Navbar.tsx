@@ -20,6 +20,7 @@ import { emailToColor, getInitial } from '../../lib/assignColor'
 import type { AppNotification } from '../smcal/types'
 import Image from 'next/image'
 import { UserMyAppContext } from '../Context/MyAppContext'
+import { sectionForPath } from '../../lib/access'
 import { Newspaper, Users } from 'lucide-react'
 
 function timeAgo(ts: AppNotification['createdAt'] | undefined | null): string {
@@ -158,7 +159,14 @@ const Navbar = ({ current_page }: navprobes) => {
     }
   };
 
-  const { isRegUser } = UserMyAppContext()
+  const { isRegUser, isGuest, access } = UserMyAppContext()
+
+  // Guests see the Dashboard plus the sections they were given; everyone else as before.
+  const showNavItem = (item: (typeof nav_items)[number]) => {
+    if (!isGuest) return item.no_reg || isRegUser
+    const section = sectionForPath(item.href)
+    return section === 'dashboard' || (section !== null && access(section) !== 'none')
+  }
 
   return (
 
@@ -317,7 +325,7 @@ const Navbar = ({ current_page }: navprobes) => {
             onMouseEnter={() => setIsHovered(index)}
             onMouseLeave={() => setIsHovered(null)}
             className={`group w-full p-2.5 flex items-center gap-3 rounded-xl 
-              transition-all duration-200 relative overflow-hidden ${item.no_reg || isRegUser ? "flex" : "hidden"}
+              transition-all duration-200 relative overflow-hidden ${showNavItem(item) ? "flex" : "hidden"}
               ${current_page === item.name
                 ? "bg-white/15 text-white shadow-lg border border-white/20"
                 : "text-blue-200 hover:bg-white/10 hover:text-white border border-transparent"

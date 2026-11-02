@@ -36,7 +36,10 @@ const Page = () => {
     // 'date' = entries whose date falls in the month, 'added' = entries added during the month
     const [monthBy, setMonthBy] = useState<'date' | 'added'>('date');
 
-    const { isRegUser, user } = UserMyAppContext()
+    const { isRegUser, user, access } = UserMyAppContext()
+    // View-only guests can't add items. With 'own' the edit form only unlocks
+    // items they added (isRegUser stays false for them on this page).
+    const canAdd = access('database') === 'edit' || access('database') === 'own'
 
     useEffect(() => {
         listenToItems(setEntries)
@@ -491,7 +494,7 @@ const Page = () => {
                         >
                             {showMineOnly ? '✓ My Submissions' : 'Show My Submissions only'}
                         </div>
-                        <div className='text-sm whitespace-nowrap px-4 py-2 rounded-xl bg-blue-300 shadow-xl hover:bg-blue-400 cursor-pointer  ' onClick={changeformvisibility}>+ Add New</div>
+                        {canAdd && <div className='text-sm whitespace-nowrap px-4 py-2 rounded-xl bg-blue-300 shadow-xl hover:bg-blue-400 cursor-pointer  ' onClick={changeformvisibility}>+ Add New</div>}
                     </div>
 
                 </div>

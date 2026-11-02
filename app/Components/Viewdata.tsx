@@ -14,8 +14,9 @@ type Props = {
     selectedEntry?: taskprobs | null
     currentwimdow?: string
     useremail?: string
+    readOnly?: boolean // view-only guests: no "Mark as Posted"
 }
-const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => {
+const Viewdata = ({ changeformvisibility, selectedEntry, useremail, readOnly = false }: Props) => {
     const { users, loading } = useUsers();
     const userlist = users.map(user => user.email);
 
@@ -631,7 +632,7 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
 
                     {/* <div className='px-4 py-2 border-2 border-green-300 shadow hover:bg-green-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { mark_as('Posted') }}>Mark as Completed</div> */}
 
-                    <a href={smPostUrl} target='_blank' className='px-4 py-2 border-2 border-green-300 shadow hover:bg-green-500 hover:text-white rounded-2xl cursor-pointer text-center' >Mark as Posted</a>
+                    {!readOnly && <a href={smPostUrl} target='_blank' className='px-4 py-2 border-2 border-green-300 shadow hover:bg-green-500 hover:text-white rounded-2xl cursor-pointer text-center' >Mark as Posted</a>}
 
                     {/* <div className='px-4 py-2 border-2 border-red-500 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { delete_task() }}>Delete Task</div> */}
                 </div>

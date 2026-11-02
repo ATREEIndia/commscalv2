@@ -7,11 +7,23 @@ import Rightcontainer from '../Components/Rightcontainer';
 import { useUsers } from '../constants';
 import { onAuthStateChanged } from 'firebase/auth';
 import Link from 'next/link';
+import { ACCESS_LABEL, GUEST_ROLE, GUEST_SECTIONS, guestLevel, type AccessLevel, type GuestAccess } from '../../lib/access';
+
+const ROLES = ["admin", "Editor", "viewer", GUEST_ROLE];
+
+// "SM Cal: View only · Database: Can edit" for a guest's row.
+const guestSummary = (access?: GuestAccess) => {
+    const parts = GUEST_SECTIONS
+        .filter((s) => guestLevel(access, s.key) !== 'none')
+        .map((s) => `${s.label}: ${ACCESS_LABEL[guestLevel(access, s.key)]}`);
+    return parts.length ? parts.join(' · ') : 'No sections';
+}
 
 type userprobs = {
     email: string;
     displayname: string;
     role?: string;
+    guestAccess?: GuestAccess;
 }
 
 const Page = () => {
@@ -26,11 +38,13 @@ const Page = () => {
     const [newuseremail, setNewuseremail] = useState("");
     const [newusername, setNewusername] = useState("");
     const [newuserrole, setNewuserrole] = useState("viewer");
+    // Sections a guest can use, picked when the role is "guest".
+    const [newGuestAccess, setNewGuestAccess] = useState<GuestAccess>({});
       const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
 
 
-    const register_user = async ({ email, displayname, role }: userprobs) => {
+    const register_user = async ({ email, displayname, role, guestAccess }: userprobs) => {
         const userdocref = doc(firestore, "reg_users", email);
         try {
             //console.log("Register button clicked");
@@ -39,6 +53,7 @@ const Page = () => {
                 email: email,
                 displayName: displayname,
                 role: role ? role : "viewer",
+                ...(role === GUEST_ROLE ? { guestAccess: guestAccess ?? {} } : {}),
                 createdAt: new Date()
             });
             alert("user registered");
@@ -66,7 +81,7 @@ const Page = () => {
         //     alert("User already exists");
         //     return;
         // }
-        register_user({ email: newuseremail, displayname: newusername, role: newuserrole });
+        register_user({ email: newuseremail, displayname: newusername, role: newuserrole, guestAccess: newGuestAccess });
 
     }
 
@@ -90,10 +105,11 @@ const Page = () => {
         }
     }
 
-    const showeditform = (email: string, displayname: string, role?: string) => {
+    const showeditform = (email: string, displayname: string, role?: string, guestAccess?: GuestAccess) => {
         setNewuseremail(email);
         setNewusername(displayname);
         setNewuserrole(role ? role : "viewer");
+        setNewGuestAccess(guestAccess ?? {});
         setShownewuserform(true);
     }
 
@@ -268,7 +284,8 @@ const Page = () => {
                         setShownewuserform(true);
                         setNewuseremail("");
                         setNewusername("");
-                        setNewuserrole("");
+                        setNewuserrole("viewer");
+                        setNewGuestAccess({});
                     }}
                 >
                     + Add <span className="hidden sm:inline">New User</span>
@@ -308,12 +325,15 @@ const Page = () => {
                                         <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-gray-600 whitespace-nowrap">
                                             {user.role || "—"}
                                         </span>
+                                        {user.role === GUEST_ROLE && (
+                                            <p className="text-[11px] text-gray-400 mt-1">{guestSummary(user.guestAccess)}</p>
+                                        )}
                                     </td>
                                     <td className="py-3 px-5">
                                         <div className="flex gap-2 justify-end">
                                             <button
                                                 className="px-3 py-1 rounded-lg border border-orange-200 text-orange-500 text-xs hover:bg-orange-50 cursor-pointer"
-                                                onClick={() => { showeditform(user.email, user.displayName, user.role); }}
+                                                onClick={() => { showeditform(user.email, user.displayName, user.role, user.guestAccess); }}
                                             >
                                                 Edit
                                             </button>
@@ -344,6 +364,9 @@ const Page = () => {
                             <div className="min-w-0">
                                 <p className="font-semibold text-gray-700 truncate">{user.displayName || "—"}</p>
                                 <p className="text-gray-500 text-xs break-all">{user.email}</p>
+                                {user.role === GUEST_ROLE && (
+                                    <p className="text-[11px] text-gray-400 mt-1">{guestSummary(user.guestAccess)}</p>
+                                )}
                             </div>
                             <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-gray-600 flex-shrink-0">
                                 {user.role}
@@ -352,7 +375,7 @@ const Page = () => {
                         <div className="flex gap-3 mt-3 justify-end">
                             <button
                                 className="px-3 py-1 rounded-lg border border-orange-200 text-orange-500 text-xs"
-                                onClick={() => { showeditform(user.email, user.displayName, user.role); }}
+                                onClick={() => { showeditform(user.email, user.displayName, user.role, user.guestAccess); }}
                             >
                                 Edit
                             </button>
@@ -384,13 +407,43 @@ const Page = () => {
                     onChange={(e) => setNewuseremail(e.target.value.trim())} value={newuseremail} />
                 <input type="text" placeholder="Display Name" className="text-sm p-2 border-2 border-blue-50 rounded-xl w-full"
                     onChange={(e) => setNewusername(e.target.value)} value={newusername} />
-                <input type="text" placeholder="Role (admin/viewer)" className="text-sm p-2 border-2 border-blue-50 rounded-xl w-full"
-                    list="roles" onChange={(e) => setNewuserrole(e.target.value)} value={newuserrole} />
-                <datalist id="roles">
-                    <option value="admin" />
-                    <option value="Editor" />
-                    <option value="viewer" />
-                </datalist>
+                <label className="flex flex-col gap-1 text-xs font-medium text-gray-500">
+                    Role
+                    <select className="text-sm font-normal text-gray-700 p-2 border-2 border-blue-50 rounded-xl w-full bg-white"
+                        onChange={(e) => setNewuserrole(e.target.value)} value={newuserrole}>
+                        {newuserrole && !ROLES.includes(newuserrole) && <option value={newuserrole}>{newuserrole}</option>}
+                        {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                </label>
+
+                {newuserrole === GUEST_ROLE && (
+                    <fieldset className="flex flex-col gap-2 border-2 border-blue-50 rounded-xl p-3">
+                        <legend className="text-xs font-medium text-gray-500 px-1">Sections this guest can use</legend>
+                        {GUEST_SECTIONS.map((section) => (
+                            <div key={section.key} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
+                                <span className="text-sm text-gray-700">{section.label}</span>
+                                <div role="radiogroup" aria-label={section.label} className="flex rounded-lg border border-gray-200 overflow-hidden self-start sm:self-auto">
+                                    {(section.levels as readonly AccessLevel[]).map((level) => {
+                                        const selected = guestLevel(newGuestAccess, section.key) === level;
+                                        return (
+                                            <button
+                                                key={level}
+                                                type="button"
+                                                role="radio"
+                                                aria-checked={selected}
+                                                onClick={() => setNewGuestAccess((prev) => ({ ...prev, [section.key]: level }))}
+                                                className={`px-2.5 py-1 text-xs border-l border-gray-200 first:border-l-0 ${selected ? 'bg-blue-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                                            >
+                                                {ACCESS_LABEL[level]}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                        <p className="text-[11px] text-gray-400">Guests always see the Dashboard. Generate WTW is view only for guests.</p>
+                    </fieldset>
+                )}
                 <div className="w-full flex flex-col-reverse sm:flex-row gap-3 sm:justify-end mt-2">
                     <button className="p-2 px-4 bg-gray-200 rounded-xl text-sm hover:bg-gray-300 cursor-pointer"
                         onClick={() => setShownewuserform(false)}>Cancel</button>

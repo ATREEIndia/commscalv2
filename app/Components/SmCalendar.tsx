@@ -27,7 +27,7 @@ interface Props {
   envDays?: EnvDay[]
   onPostClick: (id: string) => void
   onCellClick: (dateStr: string) => void
-  onNewPost: () => void
+  onNewPost?: () => void // left out: no "New Post" button (view-only)
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -430,7 +430,7 @@ export default function SmCalendar({ posts, envDays = [], onPostClick, onCellCli
           </div>
 
           {/* New Post */}
-          <button
+          {onNewPost && <button
             onClick={onNewPost}
             className="flex items-center justify-center gap-1 px-2 sm:px-3
               py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg
@@ -438,7 +438,7 @@ export default function SmCalendar({ posts, envDays = [], onPostClick, onCellCli
           >
             <span className="text-base leading-none">+</span>
             <span className="hidden sm:inline">New Post</span>
-          </button>
+          </button>}
         </div>
       </div>
 

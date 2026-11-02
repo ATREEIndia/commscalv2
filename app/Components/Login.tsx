@@ -1,12 +1,8 @@
 'use client'
-import { onAuthStateChanged } from 'firebase/auth';
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { auth } from '../firebase/firebase';
 import Googleauth from './Googleauth';
-import { useUsers } from '../constants';
-import { usePathname } from 'next/navigation';
-
-import{ getRegistedUsers} from "../firebase/firebase";
+import { UserMyAppContext } from '../Context/MyAppContext';
 
 type Props = {
   params?: Promise<{ postId: string }>
@@ -16,55 +12,17 @@ type Props = {
 
 
 const Login = ({params}:Props) => {
-    const [reg_users, setReg_users] = useState<any[]>([]);
-    const[loading,setLoading]=useState(true);
+    // The app context decides who is allowed in: anyone in reg_users (looked up
+    // after sign-in, so guests from any domain work) plus the open emails.
+    const { user, loading } = UserMyAppContext()
 
-    const path=usePathname()
-    const isSMCalSharePage=path.includes('/smcal/')
-
-    useEffect(()=>{
-        getRegistedUsers()
-        .then(users=>setReg_users(users??[]))
-        .finally(()=>setLoading(false));
-    
-
-    },[getRegistedUsers]);
-
-    
-    const userlist=reg_users.map(user=>user.email);
-
-
-
-    const [username, setUsername] = useState<string | null>("null");
-    const [useremail, setUseemail] = useState<string | null>("");
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-
-            //console.log("Authorized users:", userlist);
-            //console.log("Current user email:", user?.email);
-
-            if (userlist.includes(user?.email ? user.email : "")) {
-                setUsername(user?.displayName ?? "Login");
-                setUseemail(user?.email ?? "");
-            } else if(user?.email?.endsWith('@atree.org') || user?.email==="v.nsreekuttan25@gmail.com" || user?.email==="ananyapathak.emailme@gmail.com"){
-                setUsername(user?.displayName ?? "Login");
-                setUseemail(user?.email ?? "");
-
-            }            
-            else {
-                setUsername("null");
-                setUseemail("");
-                if (user && !loading) {
-                    auth.signOut()
-                    
-                    alert("You are not an authorized user. Please contact admin.");
-                }
-
-                
-            }
-        });
-        return () => unsubscribe();
-    }, [loading]);
+        // Signed in with Google but not allowed in the app.
+        if (!loading && !user && auth.currentUser) {
+            auth.signOut()
+            alert("You are not an authorized user. Please contact admin.");
+        }
+    }, [user, loading]);
 
 
 
@@ -80,7 +38,7 @@ const Login = ({params}:Props) => {
 
 
     return (
-        <div className={`${!useremail?.includes("@") ? "flex w-screen h-screen overflow-hidden" : "hidden"}  bg-blue-50 justify-around items-center p-2 z-60  `}>
+        <div className={`${!user ? "flex w-screen h-screen overflow-hidden" : "hidden"}  bg-blue-50 justify-around items-center p-2 z-60  `}>
             {/* <div className='   overflow-hidden border-2 p-4 rounded-xl bg-white shadow-lg flex flex-col gap-4 justify-center items-center border-blue-200 max-w-[90%] md:max-w-[30%]'>
                 <h1 className='w-full text-xl font-medium text-gray-700'>Login</h1>
                 <p className='text-sm'>Please sign in using your registerd email address. Please note that the same email addess has to be pre-registed by the admin before login. </p>

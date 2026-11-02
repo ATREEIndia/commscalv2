@@ -521,7 +521,10 @@ export default function Home() {
       light: "bg-red-50", text: "text-red-600",
     },
   ];
-  const { user, loading, isRegUser } = UserMyAppContext()
+  const { user, loading, access } = UserMyAppContext()
+  // Task stats and the task list (guests: as the admin set it; registered users: always)
+  const canViewTasks = access('dashboardTasks') !== 'none'
+  const canEditTasks = access('dashboardTasks') === 'edit'
 
 
   return (
@@ -579,7 +582,7 @@ export default function Home() {
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
 
           {/* ── Stat Cards ── */}
-          {isRegUser &&
+          {canViewTasks &&
             <section>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 ">
                 {statCards.map((stat, i) => (
@@ -724,7 +727,7 @@ export default function Home() {
 
 
           {/* ── Tasks Section ── */}
-          {isRegUser &&
+          {canViewTasks &&
             <section className="bg-white rounded-2xl border border-gray-100 shadow-sm">
 
               {/* Tasks header */}
@@ -739,7 +742,7 @@ export default function Home() {
                       {filtered_tasks.length}
                     </span>
                   </div>
-                  <button
+                  {canEditTasks && <button
                     onClick={() => setIstaskformopen(true)}
                     className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-xl shadow-sm hover:shadow-md transition-all active:scale-95"
                   >
@@ -747,7 +750,7 @@ export default function Home() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                     <span className="hidden xs:inline">Add Task</span>
-                  </button>
+                  </button>}
                 </div>
 
                 {/* Row 2: search + user filter */}
@@ -949,7 +952,7 @@ export default function Home() {
       </div>
 
       {/* ── Add Task Modal ── */}
-      {istaskformopen && (
+      {istaskformopen && canEditTasks && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIstaskformopen(false)} />
           <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl z-10 max-h-[90vh] overflow-y-auto">
@@ -963,7 +966,7 @@ export default function Home() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => manageeditform()} />
           <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl z-10 max-h-[90vh] overflow-y-auto">
-            <Viewdata changeformvisibility={manageeditform} selectedEntry={selectedEntry} />
+            <Viewdata changeformvisibility={manageeditform} selectedEntry={selectedEntry} readOnly={!canEditTasks} />
           </div>
         </div>
       )}

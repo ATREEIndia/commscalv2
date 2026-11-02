@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { onAuthStateChanged } from 'firebase/auth';
 import Editform from '../Components/Editform';
 import Viewdata from '../Components/Viewdata';
+import { UserMyAppContext } from '../Context/MyAppContext';
 
 
 
@@ -21,6 +22,7 @@ const Page = () => {
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
     const { users, loading } = useUsers();
+    const { access } = UserMyAppContext();
     const [useremail, setUseremail] = useState<string | null>("null");
     const [iseditformopen, setIseditformopen] = useState(false);
 
@@ -429,6 +431,7 @@ const Page = () => {
                             selectedEntry={selectedEntry}
                             currentwimdow={currentcategory}
                             useremail={useremail ? useremail : ""}
+                            readOnly={access('myTasks') !== 'edit'}
                         />
                     </div>
                 )}

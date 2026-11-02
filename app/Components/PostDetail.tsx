@@ -36,6 +36,7 @@ import ImageSlotList from './ImageSlotList'
 import PostDetailLightbox from './PostDetailLightbox'
 import EmailChipInput, { isValidEmail } from './EmailChipInput'
 import InstaLinksForm from './InstaLinksForm'
+import { UserMyAppContext } from '../Context/MyAppContext'
 
 // ── Status config ──────────────────────────────────────────────────────────────
 const STATUS_CFG = {
@@ -285,10 +286,15 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   const [savedEmails, setSavedEmails] = useState<string[]>([])
 
   // ── Derived (safe before early returns) ──────────────────────────────────────
-  const isRegUser = useMemo(
+  const isMember = useMemo(
     () => users.some((u) => u.email === user?.email),
     [users, user?.email]
   )
+  // Guests with view-only SM Cal access see the post but can't change or comment on it.
+  const { isGuest, access } = UserMyAppContext()
+  const readOnly = isGuest && access('smcal') !== 'edit'
+  const isRegUser = isMember && !readOnly
+  const commentUser = readOnly ? null : user
   const mailSent = useMemo(() => history.some((h) => h.type === 'mail_sent'), [history])
 
   // Seed + registered users + previously used, de-duplicated (case-insensitive)
@@ -374,9 +380,9 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   // ── Derived values ───────────────────────────────────────────────────────────
   // Assignee acts as "creator" for permission purposes; falls back to createdBy for
   // legacy posts that predate the assignedTo field.
-  const isAssignee = post.assignedTo
+  const isAssignee = !readOnly && (post.assignedTo
     ? post.assignedTo === user?.email
-    : post.createdBy?.uid === user?.uid
+    : post.createdBy?.uid === user?.uid)
   const isAdmin = users.find((u) => u.email === user?.email)?.role === 'admin'
   const cfg = STATUS_CFG[post.status] ?? STATUS_CFG.draft
   const myApproval = (post.approvedBy || []).find((a) => a.uid === user?.uid)
@@ -888,7 +894,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 sm:px-6 py-3">
         <div className="max-w-5xl mx-auto flex flex-wrap items-center gap-2 sm:gap-4">
           <button
-            onClick={() => (isRegUser ? onClose() : router.push('/'))}
+            onClick={() => (isMember ? onClose() : router.push('/'))}
             className="text-sm text-gray-500 hover:text-gray-800 transition-colors flex-shrink-0"
           >
             ← Back
@@ -1361,7 +1367,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                     postId={postId}
                     target={`image:${selectedImg}`}
                     comments={comments.filter((c) => c.target === `image:${selectedImg}`)}
-                    currentUser={user}
+                    currentUser={commentUser}
                     isAssignee={isAssignee}
                     title={`Comments — Image ${selectedImg + 1}`}
                     onClose={() => setSelectedImg(null)}
@@ -1433,7 +1439,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                 postId={postId}
                 target="body"
                 comments={comments.filter((c) => c.target === 'body')}
-                currentUser={user}
+                currentUser={commentUser}
                 isAssignee={isAssignee}
                 title="Comments on body copy"
                 postTitle={post.title}
@@ -1563,7 +1569,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
           postId={postId}
           postTitle={post.title}
           comments={comments}
-          currentUser={user}
+          currentUser={commentUser}
           isAssignee={isAssignee}
           creatorEmail={post.createdBy?.email}
           assigneeEmail={post.assignedTo}

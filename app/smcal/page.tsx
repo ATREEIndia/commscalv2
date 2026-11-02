@@ -16,6 +16,7 @@ import type { SMPost } from './types'
 import { useRouter } from 'next/navigation'
 import { Divide, X } from 'lucide-react'
 import { stripFormatting } from '../../lib/richText'
+import { UserMyAppContext } from '../Context/MyAppContext'
 
 
 
@@ -57,7 +58,10 @@ export default function SmCalPage() {
 
   const { users } = useUsers()
   const isAdmin = users.find((u) => u.email === user?.email)?.role === 'admin'
-  const reg_users = users.some((u) => u.email === user?.email)
+  // Guests with view-only SM Cal access can't create posts or work on pending tasks.
+  const { isGuest, access } = UserMyAppContext()
+  const smcalReadOnly = isGuest && access('smcal') !== 'edit'
+  const reg_users = users.some((u) => u.email === user?.email) && !smcalReadOnly
   const { days: envDays } = useEnvDays()
 
   useEffect(() => {
@@ -241,8 +245,8 @@ export default function SmCalPage() {
             posts={posts}
             envDays={envDays}
             onPostClick={(id) => setSelectedPostId(id)}
-            onCellClick={(dateStr) => openNewPost(dateStr)}
-            onNewPost={() => openNewPost()}
+            onCellClick={(dateStr) => { if (!smcalReadOnly) openNewPost(dateStr) }}
+            onNewPost={smcalReadOnly ? undefined : () => openNewPost()}
           />
         </div>
 

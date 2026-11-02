@@ -334,12 +334,14 @@ export default function CommentThread({
               {/* Action row (hidden while editing) */}
               {editingCommentId !== comment.id && (
                 <div className="flex gap-3 mt-1.5">
-                  <button
-                    onClick={() => setOpenReply(openReply === comment.id ? null : comment.id!)}
-                    className="text-[10px] text-blue-500 hover:text-blue-700"
-                  >
-                    Reply
-                  </button>
+                  {currentUser && (
+                    <button
+                      onClick={() => setOpenReply(openReply === comment.id ? null : comment.id!)}
+                      className="text-[10px] text-blue-500 hover:text-blue-700"
+                    >
+                      Reply
+                    </button>
+                  )}
                   {/* Edit: own comment with no replies */}
                   {currentUser?.uid === comment.authorUid && comment.replies.length === 0 && (
                     <button

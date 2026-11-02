@@ -105,8 +105,10 @@ const nextMonday = () => {
 
 const Page = () => {
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-    const { user, isRegUser, role } = UserMyAppContext()
-    const isAdmin = isRegUser 
+    const { user, isRegUser, role, access } = UserMyAppContext()
+    const isAdmin = isRegUser
+    // Guests only ever get view: they see the preview but can't send, reorder, edit or skip.
+    const viewOnly = access('genwtw') !== 'edit'
 
     const [date, setDate] = useState(nextMonday)
     const [force, setForce] = useState(false)
@@ -313,7 +315,7 @@ const Page = () => {
 
                     {!user ? (
                         <p className='text-sm text-gray-500 bg-white rounded-xl border border-gray-200 p-4'>Please sign in to continue.</p>
-                    ) : !isRegUser ? (
+                    ) : access('genwtw') === 'none' ? (
                         <p className='text-sm text-gray-500 bg-white rounded-xl border border-gray-200 p-4'>Only registered useres can generate the newsletter.</p>
                     ) : (
                         <div className='w-full w-full flex flex-col gap-4'>
@@ -339,6 +341,7 @@ const Page = () => {
                                     )}
                                 </div>
 
+                                {!viewOnly && <>
                                 <label className='flex items-start gap-2 text-sm text-gray-700 cursor-pointer'>
                                     <input
                                         type='checkbox'
@@ -391,6 +394,7 @@ const Page = () => {
                                 >
                                     {running ? 'Sending…' : `Send now · ${WTW_AUDIENCES[audience].label.replace(/^Send /, '')}`}
                                 </button>
+                                </>}
                             </section>
 
                             {/* Items skipped from this newsletter, collapsed by default */}
@@ -413,20 +417,21 @@ const Page = () => {
                                                     <button
                                                         type='button'
                                                         onClick={() => setEditing(item)}
-                                                        className='flex-1 min-w-0 text-left'
-                                                        title='Click to edit'
+                                                        disabled={viewOnly}
+                                                        className='flex-1 min-w-0 text-left disabled:cursor-default'
+                                                        title={viewOnly ? undefined : 'Click to edit'}
                                                     >
                                                         <span className='block text-sm text-gray-800 truncate'>{item.title}</span>
                                                         <span className='block text-[11px] text-gray-500'>{sectionOf(item.category)}</span>
                                                     </button>
-                                                    <button
+                                                    {!viewOnly && <button
                                                         type='button'
                                                         onClick={() => unskip(item)}
                                                         disabled={!!restoring}
                                                         className='self-start sm:self-auto flex-shrink-0 px-3 py-1.5 text-xs font-medium text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed'
                                                     >
                                                         {restoring === item.id ? 'Adding…' : 'Add back'}
-                                                    </button>
+                                                    </button>}
                                                 </li>
                                             ))}
                                         </ul>
@@ -455,7 +460,7 @@ const Page = () => {
                                     <h2 className='text-base font-semibold text-gray-800'>Peview the Newsletter</h2>
                                     {coverage && (
                                         <span className='text-xs text-gray-500'>
-                                            {weekItems.length} item{weekItems.length !== 1 ? 's' : ''} · added {format(coverage.from, 'dd MMM')} – {format(coverage.to, 'dd MMM')} · click an item to edit
+                                            {weekItems.length} item{weekItems.length !== 1 ? 's' : ''} · added {format(coverage.from, 'dd MMM')} – {format(coverage.to, 'dd MMM')}{viewOnly ? '' : ' · click an item to edit'}
                                         </span>
                                     )}
                                 </div>
@@ -483,8 +488,8 @@ const Page = () => {
                                                                     key={item.id}
                                                                     item={item}
                                                                     showByline={BYLINE_CATEGORIES.includes(category)}
-                                                                    onOpen={() => setEditing(item)}
-                                                                    order={{
+                                                                    onOpen={viewOnly ? undefined : () => setEditing(item)}
+                                                                    order={viewOnly ? undefined : {
                                                                         isFirst: index === 0,
                                                                         isLast: index === list.length - 1,
                                                                         onUp: () => moveItem(list, index, -1),
@@ -664,20 +669,23 @@ function OrderBar({ weight, single, order }: { weight?: number; single?: boolean
     )
 }
 
-function NewsletterCard({ item, showByline, onOpen, order }: { item: itemprobes; showByline: boolean; onOpen: () => void; order: OrderControls }) {
+// Without onOpen/order (view only) the card is just the preview: not clickable, no order bar.
+function NewsletterCard({ item, showByline, onOpen, order }: { item: itemprobes; showByline: boolean; onOpen?: () => void; order?: OrderControls }) {
     const link = item.url?.startsWith('http') ? item.url : ''
     let image = ''
     try { image = imageSrc(item.img_url) } catch { /* malformed URL: no image */ }
     return (
         <div
-            role='button'
-            tabIndex={0}
-            onClick={onOpen}
-            onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onOpen() } }}
-            title='Click to edit'
-            className='px-[15px] cursor-pointer rounded-md transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-300 min-w-0'
+            {...(onOpen ? {
+                role: 'button',
+                tabIndex: 0,
+                onClick: onOpen,
+                onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onOpen() } },
+                title: 'Click to edit',
+            } : {})}
+            className={`px-[15px] rounded-md min-w-0 ${onOpen ? 'cursor-pointer transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-300' : ''}`}
         >
-            <OrderBar weight={item.wtwWeight} single={item.wtwSingle} order={order} />
+            {order && <OrderBar weight={item.wtwWeight} single={item.wtwSingle} order={order} />}
             {image && (
                 <div style={{ border: `1px solid ${NL.border}` }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
