@@ -188,7 +188,7 @@ export const categorylist = [
   "Book",
   "Book chapters",
   "Policy Brief",
-  "C&S",
+  
   "Announcement",
   "Report",
   "Talk@ATREE",
