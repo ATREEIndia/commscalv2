@@ -475,8 +475,8 @@ const Page = () => {
                     </div>
 
                     <div className=' flex  justify-center md:justify-end flex-row items-center gap-2 mt-2 sm:mt-0 '>
-                         <div className=' lg:hidden  flex text-sm rounded-xl border border-blue-300 overflow-hidden shadow-xl whitespace-nowrap' title="Show entries by their date, or by when they were added">
-                            {([['date', <Calendar1 size={10}/>], ['added', <CalendarArrowUpIcon size={10} />]] as const).map(([value, label]) => (
+                        <div className=' lg:hidden  flex text-sm rounded-xl border border-blue-300 overflow-hidden shadow-xl whitespace-nowrap' title="Show entries by their date, or by when they were added">
+                            {([['date', <Calendar1 size={10} />], ['added', <CalendarArrowUpIcon size={10} />]] as const).map(([value, label]) => (
                                 <div
                                     key={value}
                                     className={`px-3 py-2 cursor-pointer ${monthBy === value ? 'bg-blue-400 text-white' : 'bg-white hover:bg-blue-100'}`}
@@ -486,7 +486,7 @@ const Page = () => {
                                 </div>
                             ))}
                         </div>
-                       
+
                         <div
                             className={`text-sm px-4 py-2 rounded-xl shadow-xl cursor-pointer whitespace-nowrap ${showMineOnly ? 'bg-blue-400 text-white' : 'bg-white border border-blue-300 hover:bg-blue-100'}`}
                             onClick={() => setShowMineOnly(!showMineOnly)}
@@ -503,19 +503,19 @@ const Page = () => {
 
                     <div className={`sm:flex  hidden w-full  p-4 gap-4 items-center bg-blue-200 justify-around sticky top-0 z-10 rounded-xl `}>
                         <div>
-                            
-                             <div className='flex text-sm rounded-xl border border-blue-300 overflow-hidden shadow-xl whitespace-nowrap' title="Show entries by their date, or by when they were added">
-                            {([['date', 'By date'], ['added', 'By submission']] as const).map(([value, label]) => (
-                                <div
-                                    key={value}
-                                    className={`px-3 py-2 cursor-pointer ${monthBy === value ? 'bg-blue-400 text-white' : 'bg-white hover:bg-blue-100'}`}
-                                    onClick={() => setMonthBy(value)}
-                                >
-                                    {label}
-                                </div>
-                            ))}
-                        </div>
-                           
+
+                            <div className='flex text-sm rounded-xl border border-blue-300 overflow-hidden shadow-xl whitespace-nowrap' title="Show entries by their date, or by when they were added">
+                                {([['date', 'By date'], ['added', 'By submission']] as const).map(([value, label]) => (
+                                    <div
+                                        key={value}
+                                        className={`px-3 py-2 cursor-pointer ${monthBy === value ? 'bg-blue-400 text-white' : 'bg-white hover:bg-blue-100'}`}
+                                        onClick={() => setMonthBy(value)}
+                                    >
+                                        {label}
+                                    </div>
+                                ))}
+                            </div>
+
 
                         </div>
 
@@ -531,71 +531,73 @@ const Page = () => {
                         </p>
                     )}
                     {visibleEntries.map((entry, index) => (
-                        <div key={index}>
+                        <div className='' key={index}>
                             {/* computer screen */}
-                            <div className={`sm:flex hidden w-full justify-around   ${index % 2 > 0 ? "bg-gray-200" : "bg-white"} rounded-xl p-4 gap-4 items-center`}>
-                                <div className='text-sm text-left align-middle justify-start w-[8%]'>
-                                    <h1>{format(new Date(entry.date), monthBy === 'added' ? 'dd MMM yy' : 'dd MMM')}</h1>
-                                    {monthBy === 'added' && addedDate(entry) && (
-                                        <p className='text-[10px] text-gray-500'>added {format(addedDate(entry)!, 'dd MMM')}</p>
-                                    )}
-                                </div>
+                            <div  className={`cursor-pointer sm:flex hidden  ${index % 2 > 0 ? "bg-gray-200" : "bg-white"} rounded-xl p-4 gap-4 hover: bg-blue-200  items-center`}>
+                                <div onClick={() => manageeditform(entry)} className={`sm:flex hidden w-full justify-around    ${index % 2 > 0 ? "bg-gray-200" : "bg-white"} rounded-xl p-4 gap-4 hover: bg-blue-200  items-center`}>
+                                    <div onClick={() => manageeditform(entry)} className='text-sm text-left align-middle justify-start w-[8%]'>
+                                        <h1>{format(new Date(entry.date), monthBy === 'added' ? 'dd MMM yy' : 'dd MMM')}</h1>
+                                        {monthBy === 'added' && addedDate(entry) && (
+                                            <p className='text-[10px] text-gray-500'>added {format(addedDate(entry)!, 'dd MMM')}</p>
+                                        )}
+                                    </div>
 
-                                <h1 className={`text-sm ${entry.sm_status === "Posted" ? "bg-green-200" : entry.sm_status === "Working" ? "bg-orange-200" : entry.sm_status === "No Post" ? "bg-red-200" : entry.sm_status === "Pending Breakdown" ? "bg-yellow-200" : "bg-white"}  rounded-xl p-2 text-left align-middle justify-start w-[15%]`}>{entry.category}</h1>
+                                    <h1 onClick={() => manageeditform(entry)} className={`text-sm ${entry.sm_status === "Posted" ? "bg-green-200" : entry.sm_status === "Working" ? "bg-orange-200" : entry.sm_status === "No Post" ? "bg-red-200" : entry.sm_status === "Pending Breakdown" ? "bg-yellow-200" : "bg-white"}  rounded-xl p-2 text-left align-middle justify-start w-[15%]`}>{entry.category}</h1>
 
-                                <div className="flex -space-x-2">
-                                    {entry.assigned_to?.split(',').map((person, index) => {
-                                        const name = person.trim();
-                                        const letter = name.charAt(0).toUpperCase();
-                                        const color = colors[letter.charCodeAt(0) % colors.length];
+                                    <div className="flex -space-x-2">
+                                        {entry.assigned_to?.split(',').map((person, index) => {
+                                            const name = person.trim();
+                                            const letter = name.charAt(0).toUpperCase();
+                                            const color = colors[letter.charCodeAt(0) % colors.length];
 
-                                        return (
-                                            <h1
-                                                key={index}
-                                                title={name} // 👈 shows name on hover
-                                                className={`rounded-full ${color} w-5 h-5 flex items-center justify-center text-white cursor-pointer text-xs`}
-                                            >
-                                                {letter}
-                                            </h1>
-                                        );
-                                    })}
-                                </div>
+                                            return (
+                                                <h1
+                                                    key={index}
+                                                    title={name} // 👈 shows name on hover
+                                                    className={`rounded-full ${color} w-5 h-5 flex items-center justify-center text-white cursor-pointer text-xs`}
+                                                >
+                                                    {letter}
+                                                </h1>
+                                            );
+                                        })}
+                                    </div>
 
-                                <h2 className='w-[20%] cursor-pointer  text-center whitespace-normal break-words  max-h-[100px] overflow-clip  text-sm' onClick={() => { manageeditform(entry) }}>{entry.title} </h2>
-                                <p className='w-[20%]   text-sm text-center whitespace-normal break-words max-h-[100px] overflow-clip '>{entry.mention}</p>
-
-
-
+                                    <h2 className='w-[20%] cursor-pointer  text-center whitespace-normal break-words  max-h-[100px] overflow-clip  text-sm' onClick={() => { manageeditform(entry) }}>{entry.title} </h2>
+                                    <p className='w-[20%]   text-sm text-center whitespace-normal break-words max-h-[100px] overflow-clip '>{entry.mention}</p>
 
 
 
 
 
-                                <div className={`flex justify-center items-center gap-5  ${isRegUser ? "flex" : "hidden"}`}>
-
-                                    <label className="custom-checkbox mt-1">
-                                        <input className={``}
-                                            type="checkbox"
-                                            checked={String(entry.wtw_status) == "false"}
-                                            onChange={(e) =>
-                                                updatedwtw_status(entry.title, String(e.target.checked), entry.date)
-                                            }
-                                        />
-                                        <span className="checkmark"></span>
-                                    </label>
 
 
-                                    <input className='w-[20px] h-[20px]' type='checkbox' checked={entry.wtw_status ? true : false} onChange={(e) => updatedwtw_status(entry.title, String(e.target.checked), entry.date)} />
 
-                                    <p className='cursor-pointer' onClick={() => { updatedwtw_status(entry.title, 'reset', entry.date) }}>↺</p>
+                                    <div className={`flex justify-center items-center gap-5  ${isRegUser ? "flex" : "hidden"}`}>
 
-                                    {/* <input className={`${entry.wtw_status?"":"hidden"}`} type='checkbox' checked={entry.wtw_status ? entry.wtw_status : false} onChange={(e) => updatedwtw_status(entry.title, e.target.checked, entry.date)} />
+                                        <label className="custom-checkbox mt-1">
+                                            <input className={``}
+                                                type="checkbox"
+                                                checked={String(entry.wtw_status) == "false"}
+                                                onChange={(e) =>
+                                                    updatedwtw_status(entry.title, String(e.target.checked), entry.date)
+                                                }
+                                            />
+                                            <span className="checkmark"></span>
+                                        </label>
+
+
+                                        <input className='w-[20px] h-[20px]' type='checkbox' checked={entry.wtw_status ? true : false} onChange={(e) => updatedwtw_status(entry.title, String(e.target.checked), entry.date)} />
+
+                                        <p className='cursor-pointer' onClick={() => { updatedwtw_status(entry.title, 'reset', entry.date) }}>↺</p>
+
+                                        {/* <input className={`${entry.wtw_status?"":"hidden"}`} type='checkbox' checked={entry.wtw_status ? entry.wtw_status : false} onChange={(e) => updatedwtw_status(entry.title, e.target.checked, entry.date)} />
 
                                    
                                     <select className='bg-transparent focus:ring-0 focus:outline-0 text-xs text-white '  value={entry.sm_status ? "true" : "false"} onChange={(e) => {updatedwtw_status(entry.title, e.target.value==='t', entry.date) }}>
                                         <option value=""> </option>
                                         <option value="nowtw">Not for WTW</option>
                                     </select> */}
+                                    </div>
                                 </div>
 
 
