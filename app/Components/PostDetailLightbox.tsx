@@ -77,7 +77,7 @@ export default function PostDetailLightbox({
   creatorEmail, assigneeEmail, onClose,
 }: Props) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
-  const [showComments, setShowComments] = useState(false)
+  const [showComments, setShowComments] = useState(true)
   const total = images.length
 
   const goPrev = () => setCurrentIndex((i) => (i > 0 ? i - 1 : i))
