@@ -34,7 +34,7 @@ function MediaSlide({ url }: { url: string }) {
   const [imgErr, setImgErr] = useState(false)
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center px-4 sm:px-12">
+    <div className="relative w-full h-full flex items-center justify-center px-12 sm:px-16">
       {!imgErr ? (
         <img
           src={convertDriveUrlFull(url)}
@@ -119,86 +119,92 @@ export default function PostDetailLightbox({
   const targetComments = comments.filter((c) => c.target === target)
   const unresolvedCount = targetComments.filter((c) => !c.resolved).length
 
+  const arrowCls = `absolute top-1/2 -translate-y-1/2 z-10 w-9 h-9 sm:w-11 sm:h-11 flex
+    items-center justify-center rounded-full bg-black/50 hover:bg-black/70 text-white
+    text-2xl leading-none transition-colors disabled:opacity-0 disabled:pointer-events-none`
+
   return (
     <div
-      className="fixed inset-0 z-[70] bg-black/85 backdrop-blur-sm"
+      className="fixed inset-0 z-[70] bg-black/85 backdrop-blur-sm flex flex-col sm:flex-row"
       onClick={onClose}
     >
-      {/* Position indicator */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full
-        bg-white/10 text-white text-xs font-medium backdrop-blur-sm">
-        {currentIndex + 1} / {total}
-      </div>
-
-      {/* Comment badge */}
-      <button
-        onClick={(e) => { e.stopPropagation(); setShowComments((v) => !v) }}
-        title="Comments"
-        className="absolute top-4 right-16 z-10 min-w-9 h-9 px-2 flex items-center justify-center
-          rounded-full bg-white/10 hover:bg-white/25 text-white text-sm transition-colors gap-1"
-      >
-        💬{unresolvedCount > 0 && <span className="font-bold">{unresolvedCount}</span>}
-      </button>
-
-      {/* Close */}
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 z-10 w-9 h-9 flex items-center justify-center
-          rounded-full bg-white/10 hover:bg-white/25 text-white text-lg transition-colors"
-        aria-label="Close"
-      >
-        ✕
-      </button>
-
-      {/* Left arrow */}
-      <button
-        onClick={(e) => { e.stopPropagation(); goPrev() }}
-        disabled={currentIndex === 0}
-        aria-label="Previous"
-        className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10
-          items-center justify-center rounded-full bg-white/10 hover:bg-white/25 text-white
-          text-xl transition-colors disabled:opacity-25 disabled:cursor-not-allowed disabled:hover:bg-white/10"
-      >
-        ‹
-      </button>
-
-      {/* Right arrow */}
-      <button
-        onClick={(e) => { e.stopPropagation(); goNext() }}
-        disabled={currentIndex === total - 1}
-        aria-label="Next"
-        className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10
-          items-center justify-center rounded-full bg-white/10 hover:bg-white/25 text-white
-          text-xl transition-colors disabled:opacity-25 disabled:cursor-not-allowed disabled:hover:bg-white/10"
-      >
-        ›
-      </button>
-
-      {/* Slider */}
-      <div
-        className="w-full h-full overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div
-          className="flex w-full h-full transition-transform duration-300 ease-out"
-          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-        >
-          {images.map((url, i) => (
-            <div key={i} className="w-full h-full flex-shrink-0">
-              <MediaSlide url={url} />
-            </div>
-          ))}
+      {/* ── Media area ── */}
+      <div className="relative flex-1 min-h-0 min-w-0">
+        {/* Position indicator */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full
+          bg-white/10 text-white text-xs font-medium backdrop-blur-sm">
+          {currentIndex + 1} / {total}
         </div>
+
+        {/* Comment toggle */}
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowComments((v) => !v) }}
+          title={showComments ? 'Hide comments' : 'Show comments'}
+          className="absolute top-4 right-16 z-10 min-w-9 h-9 px-2 flex items-center justify-center
+            rounded-full bg-white/10 hover:bg-white/25 text-white text-sm transition-colors gap-1"
+        >
+          💬{unresolvedCount > 0 && <span className="font-bold">{unresolvedCount}</span>}
+        </button>
+
+        {/* Close */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 w-9 h-9 flex items-center justify-center
+            rounded-full bg-white/10 hover:bg-white/25 text-white text-lg transition-colors"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+
+        {/* Slider */}
+        <div
+          className="w-full h-full overflow-hidden pt-14 pb-4"
+          onClick={(e) => e.stopPropagation()}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div
+            className="flex w-full h-full transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+          >
+            {images.map((url, i) => (
+              <div key={i} className="w-full h-full flex-shrink-0">
+                <MediaSlide url={url} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Arrows — either side of the image */}
+        {total > 1 && (
+          <>
+            <button
+              onClick={(e) => { e.stopPropagation(); goPrev() }}
+              disabled={currentIndex === 0}
+              aria-label="Previous"
+              className={`${arrowCls} left-2 sm:left-4`}
+            >
+              ‹
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); goNext() }}
+              disabled={currentIndex === total - 1}
+              aria-label="Next"
+              className={`${arrowCls} right-2 sm:right-4`}
+            >
+              ›
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Comment panel */}
+      {/* ── Comment panel: right side on desktop, bottom sheet on mobile ── */}
       {showComments && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="fixed top-0 right-0 h-full w-full sm:w-[360px] bg-white z-[80]
-            shadow-2xl flex flex-col"
+          className="relative z-[80] bg-white shadow-2xl flex flex-col
+            h-[45vh] w-full rounded-t-2xl overflow-hidden
+            sm:h-full sm:w-[360px] sm:rounded-none sm:flex-shrink-0"
         >
           <CommentThread
             postId={postId}

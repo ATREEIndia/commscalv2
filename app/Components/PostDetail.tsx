@@ -461,7 +461,18 @@ export default function PostDetail({ postId, user, onClose }: Props) {
 
   const handleSendMail = async () => {
     const toList = mailTo
-    const ccList = mailCc
+    // If someone other than the assignee sends the request, cc the assignee
+    // (unless they're already in To/Cc).
+    const assignee = post.assignedTo?.trim()
+    const alreadyIncluded = (email: string) =>
+      [...toList, ...mailCc].some((e) => e.toLowerCase() === email.toLowerCase())
+    const ccList =
+      assignee &&
+      assignee.toLowerCase() !== (user?.email || '').toLowerCase() &&
+      !alreadyIncluded(assignee)
+        ? [...mailCc, assignee]
+        : mailCc
+
     const invalid = [...toList, ...ccList].filter((e) => !isValidEmail(e))
 
     if (toList.length === 0) { alert('Add at least one recipient.'); return }
