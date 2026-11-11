@@ -572,7 +572,9 @@ const Page = () => {
 
 
 
-                                    <div className={`flex justify-center items-center gap-5  ${isRegUser ? "flex" : "hidden"}`}>
+                                    
+                                </div>
+                                <div className={`flex justify-center items-center gap-5  ${isRegUser ? "flex" : "hidden"}`}>
 
                                         <label className="custom-checkbox mt-1">
                                             <input className={``}
@@ -598,7 +600,6 @@ const Page = () => {
                                         <option value="nowtw">Not for WTW</option>
                                     </select> */}
                                     </div>
-                                </div>
 
 
 
