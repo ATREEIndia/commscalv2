@@ -111,7 +111,7 @@ const Page = () => {
     const viewOnly = access('genwtw') !== 'edit'
 
     const [date, setDate] = useState(nextMonday)
-    const [force, setForce] = useState(false)
+    const [force, setForce] = useState(true)
     const [running, setRunning] = useState<WtwAudience | null>(null)
     const [audience, setAudience] = useState<WtwAudience>('test')
     const [result, setResult] = useState<RunResult | null>(null)
