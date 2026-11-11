@@ -4,7 +4,9 @@ import { auth, db, firestore } from '../firebase/firebase';
 import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
 import { add, format } from 'date-fns';
 import { onAuthStateChanged } from 'firebase/auth';
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, limit, query as fsQuery, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, limit, query as fsQuery, serverTimestamp, setDoc, Timestamp, updateDoc, where } from 'firebase/firestore';
+import dayjs, { IST } from '../../lib/dayjs';
+import { notify } from '../../lib/notifications';
 import { useRouter } from 'next/navigation';
 import { submitToSheet } from '../Posttosheet';
 import { UserMyAppContext } from '../Context/MyAppContext';
@@ -436,10 +438,64 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
             }, { merge: true }).then(() => {
                 //console.log('Task added successfully!');
                 syncPostAssignee(assigned_to);
+                syncPostDeadline(Smdeadline);
             }
             )
 
         } catch (error) { }
+    }
+
+    // The task deadline is the linked SM Cal post's date: move the post to the new day, keeping its time (IST).
+    const syncPostDeadline = async (deadline: string) => {
+        if (!deadline || !selectedEntry?.id) return;
+        try {
+            let postId = selectedEntry.smPostId;
+            if (!postId) {
+                const ids = Array.from(new Set([selectedEntry.id, selectedEntry.title || selectedEntry.id]));
+                const found = await getDocs(fsQuery(collection(firestore, 'posts'), where('sourceTaskId', 'in', ids), limit(1)));
+                postId = found.docs[0]?.id;
+            }
+            if (!postId) return;
+            const postRef = doc(firestore, 'posts', postId);
+            const postSnap = await getDoc(postRef);
+            if (!postSnap.exists()) return;
+
+            const post = postSnap.data();
+            const current = post.scheduledAt?.toDate ? dayjs(post.scheduledAt.toDate()).tz(IST) : null;
+            if (current && current.format('YYYY-MM-DD') === deadline) return;
+
+            const time = current ? current.format('HH:mm') : '10:00';
+            const next = dayjs.tz(`${deadline}T${time}`, IST);
+            await updateDoc(postRef, { scheduledAt: Timestamp.fromDate(next.toDate()) });
+
+            const actor = auth.currentUser;
+            await addDoc(collection(firestore, 'posts', postId, 'history'), {
+                type: 'schedule_changed',
+                actor: {
+                    uid: actor?.uid || '',
+                    name: actor?.displayName || 'User',
+                    photoURL: actor?.photoURL || '',
+                    email: actor?.email || '',
+                },
+                timestamp: serverTimestamp(),
+                before: current ? current.format('DD MMM YYYY, hh:mm A') : '',
+                after: next.format('DD MMM YYYY, hh:mm A'),
+            });
+
+            // Same in-app notification + email as rescheduling from the post page.
+            const before = current ? current.format('DD MMM YYYY, hh:mm A') : 'unscheduled';
+            const name = actor?.displayName || 'User';
+            await notify({
+                recipients: [post.createdBy?.email, post.assignedTo],
+                actor: { email: actor?.email || '', name, photoURL: actor?.photoURL || '' },
+                type: 'post_edited',
+                postId,
+                postTitle: post.title,
+                message: `${name} rescheduled "${post.title}"\n${before} ➜ ${next.format('DD MMM YYYY, hh:mm A')}`,
+            });
+        } catch (error) {
+            console.error('Error syncing post deadline:', error);
+        }
     }
 
     // A post has a single assignee, so the first person on the task owns the linked SM Cal post.

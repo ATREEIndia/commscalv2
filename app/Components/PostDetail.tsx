@@ -1084,7 +1084,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
               <div className="flex items-center gap-2">
                 <p className="text-sm font-medium text-gray-800">{formatIST(post.scheduledAt)}</p>
                 {isRegUser && (
-                  <button onClick={startEditSchedule} className="text-gray-300 hover:text-gray-600 text-base" title="Edit schedule">
+                  <button onClick={startEditSchedule} className="text-yellow-700 border w-6 h-6 border-blue-200 bg-blue-50  rounded-full cursor-pointer hover:text-gray-600 text-sm" title="Edit schedule">
                     ✎
                   </button>
                 )}
