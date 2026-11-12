@@ -38,6 +38,8 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
     const { users, loading } = useUsers();
     const userlist = users.map(user => user.email);
 
+    const[updateBtnText, setupdateBTNText]=useState('Update')
+
     const { isRegUser, role } = UserMyAppContext()
     const router = useRouter()
 
@@ -225,10 +227,10 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
 
         const assignees = [...assign_to]
 
-        update(dataRef, updatePayload)
+        return update(dataRef, updatePayload)
             .then(async () => {
                 //console.log('Data added successfully!');
-                await addToTask({ title, description, url, assigned_to: assignees, createdon: new Date().toISOString().split('T')[0] })
+                await addToTask({ title, description, url, assigned_to: assignees, current_status: sm_status, createdon: new Date().toISOString().split('T')[0] })
                 // clearform();
                 if (mayOfferSmCal) offerSmCalPost()
 
@@ -253,6 +255,9 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
     }
 
     const processDBpush = () => {
+
+        if (updateBtnText === 'Updating...') return
+
 
         if (!date) {
             setDate_error(true);
@@ -319,6 +324,8 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
             return;
         }
 
+        setupdateBTNText('Updating...')
+
         callsheetque(
             "replace"
 
@@ -329,7 +336,10 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
 
         let customsm_status = sm_status;
 
-        if (sm_status.length < 1 && assigned_toString.length > 0) {
+        // Assigning someone (new assignee, or none set yet) moves the post to Working,
+        // unless it has already been posted.
+        // "No Post" (set when the SM Cal post is deleted) never stays once someone is assigned again.
+        if (assigned_toString.length > 0 && sm_status !== 'Posted' && (sm_status.length < 1 || sm_status === 'No Post' || newlyAssigned)) {
             customsm_status = 'Working'
         }
 
@@ -358,8 +368,8 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
             website_status: false,
             remarks: remarks,
             tags: tags,
-        });
-        update_Sheet(date, title, sm_status);
+        }).finally(() => setupdateBTNText('Update'));
+        update_Sheet(date, title, customsm_status);
 
         // When SM Cal may be offered, the form stays open until offerSmCalPost decides.
         if (!mayOfferSmCal) changeformvisibility();
@@ -400,7 +410,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
         if (addNow && selectedEntry?.id) router.push(`/smcal?newPostFor=${encodeURIComponent(selectedEntry.id)}`)
     }
 
-    const addToTask = async ({ title, description, url, assigned_to }: taskprobs) => {
+    const addToTask = async ({ title, description, url, assigned_to, current_status }: taskprobs) => {
 
 
 
@@ -429,7 +439,8 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
                 id: selectedEntry?.id,
 
                 // completed_by is left out so editing the entry doesn't wipe who has finished the task
-                current_status: sm_status,
+                // The status actually saved on the item (e.g. "Working" after a new assignment)
+                current_status: current_status ?? sm_status,
 
                 // The item already has a post: link this task to it so SM Cal doesn't offer to create another
                 ...(selectedEntry?.smPostId ? { linkedSmPostId: selectedEntry.smPostId } : {}),
@@ -983,7 +994,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
 
 
                 <div className='text-xs p-2'>
-                    <h1 >SM Status: {sm_status}</h1>
+                    <h1 >SM Status: {assign_to.length > 0 && sm_status !== 'Posted' && (newlyAssigned || sm_status === 'No Post') ? 'Working' : sm_status}</h1>
 
                 </div>
 
@@ -1193,7 +1204,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
                         <div className='px-4 py-2 border-2 border-gray-300 shadow hover:bg-gray-500 hover:text-white rounded-2xl cursor-pointer text-center' title='Leave this item out of the WTW newsletter' onClick={() => { skipWtw() }}>Skip WTW</div>
                     )}
 
-                    <div className='px-4 py-2 border-2 border-green-300 shadow hover:bg-green-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { processDBpush() }}>Update</div>
+                    <div className={`px-4 py-2 border-2 border-green-300 shadow rounded-2xl text-center ${updateBtnText === 'Updating...' ? 'opacity-60 cursor-not-allowed' : 'hover:bg-green-500 hover:text-white cursor-pointer'}`} onClick={() => { processDBpush() }}>{updateBtnText}</div>
                 </div>
 
 
