@@ -240,6 +240,16 @@ const Page = () => {
         }
     }
 
+    const setBanner = async (item: itemprobes, banner: boolean) => {
+        if (!item.id || banner === !!item.wtwBanner) return
+        try {
+            await update(ref(db, `items/${item.id}`), { wtwBanner: banner })
+        } catch (error) {
+            console.error('Saving banner failed:', error)
+            alert('Could not save the banner setting. Please try again.')
+        }
+    }
+
     // Item open in the edit form
     const [editing, setEditing] = useState<itemprobes | null>(null)
 
@@ -496,6 +506,7 @@ const Page = () => {
                                                                         onDown: () => moveItem(list, index, 1),
                                                                         onWeight: (w) => setWeight(item, w),
                                                                         onSingle: (s) => setSingle(item, s),
+                                                                        onBanner: (b) => setBanner(item, b),
                                                                     }}
                                                                 />
                                                             ))}
@@ -598,6 +609,7 @@ const Page = () => {
 }
 
 // Pairs items into rows of two; an item marked wtwSingle always gets a row of its own.
+// A banner is paired like any other item and fills only its own tile unless it is also single.
 const chunkRows = (list: itemprobes[]) => {
     const rows: { item: itemprobes; index: number }[][] = []
     let open: { item: itemprobes; index: number }[] | null = null
@@ -625,10 +637,11 @@ type OrderControls = {
     onDown: () => void
     onWeight: (weight: number) => void
     onSingle: (single: boolean) => void
+    onBanner: (banner: boolean) => void
 }
 
-// Move up/down, the weight and the single-row toggle. Clicks here don't open the edit form.
-function OrderBar({ weight, single, order }: { weight?: number; single?: boolean; order: OrderControls }) {
+// Move up/down, the weight and the single-row and banner toggles. Clicks here don't open the edit form.
+function OrderBar({ weight, single, banner, order }: { weight?: number; single?: boolean; banner?: boolean; order: OrderControls }) {
     const [draft, setDraft] = useState(weight?.toString() ?? '')
     useEffect(() => { setDraft(weight?.toString() ?? '') }, [weight])
 
@@ -665,6 +678,15 @@ function OrderBar({ weight, single, order }: { weight?: number; single?: boolean
                 />
                 Single
             </label>
+            <label className='flex items-center gap-1 text-[11px] text-gray-500 ml-1 cursor-pointer' title='Show only the full image, uncropped, at the width of this tile (check Single too for a full row)'>
+                <input
+                    type='checkbox'
+                    checked={!!banner}
+                    onChange={(e) => order.onBanner(e.target.checked)}
+                    className='w-3.5 h-3.5 accent-blue-600'
+                />
+                Banner
+            </label>
         </div>
     )
 }
@@ -674,6 +696,13 @@ function NewsletterCard({ item, showByline, onOpen, order }: { item: itemprobes;
     const link = item.url?.startsWith('http') ? item.url : ''
     let image = ''
     try { image = imageSrc(item.img_url) } catch { /* malformed URL: no image */ }
+    // A banner shows only its banner image (or the item image if none was uploaded);
+    // without any image it falls back to the normal card.
+    let bannerImage = ''
+    if (item.wtwBanner) {
+        try { bannerImage = item.wtwBannerUrl?.trim() ? imageSrc(item.wtwBannerUrl) : image } catch { bannerImage = image }
+    }
+    const isBanner = !!bannerImage
     return (
         <div
             {...(onOpen ? {
@@ -685,7 +714,19 @@ function NewsletterCard({ item, showByline, onOpen, order }: { item: itemprobes;
             } : {})}
             className={`px-[15px] rounded-md min-w-0 ${onOpen ? 'cursor-pointer transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-300' : ''}`}
         >
-            {order && <OrderBar weight={item.wtwWeight} single={item.wtwSingle} order={order} />}
+            {order && <OrderBar weight={item.wtwWeight} single={item.wtwSingle} banner={item.wtwBanner} order={order} />}
+            {isBanner ? (
+                // Full width, natural height: the whole image, never cropped
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                    src={bannerImage}
+                    alt={item.title || ''}
+                    loading='lazy'
+                    referrerPolicy='no-referrer'
+                    onError={(e) => { e.currentTarget.style.display = 'none' }}
+                    className='block w-full h-auto'
+                />
+            ) : <>
             {image && (
                 <div style={{ border: `1px solid ${NL.border}` }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -730,6 +771,7 @@ function NewsletterCard({ item, showByline, onOpen, order }: { item: itemprobes;
                     </p>
                 )}
             </div>
+            </>}
         </div>
     )
 }

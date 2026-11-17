@@ -67,6 +67,8 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
 
     const [url, setUrl] = useState<string>("");
     const [imgUrl, setImgUrl] = useState<string>("");
+    // Newsletter banner image, shown in the form only when the item is marked as a banner on /genwtw
+    const [bannerUrl, setBannerUrl] = useState<string>("");
     const [description, setDescription] = useState<string>("");
     const [category, setCategory] = useState<string>("");
     const [platform, setPlatform] = useState<string>("");
@@ -104,27 +106,29 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
 
     // Uploads are limited to the person who added the entry and admins.
     const canUpload = (!!userEmail && selectedEntry?.addedBy === userEmail) || (isRegUser && role === "admin") || (isRegUser && role === "Editor");
-    const [uploading, setUploading] = useState<'' | 'file' | 'image'>('');
-    const [uploadError, setUploadError] = useState<'' | 'file' | 'image'>('');
+    type UploadKind = 'file' | 'image' | 'banner'
+    const [uploading, setUploading] = useState<'' | UploadKind>('');
+    const [uploadError, setUploadError] = useState<'' | UploadKind>('');
     const [cropFile, setCropFile] = useState<File | null>(null);
 
-    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, kind: 'file' | 'image') => {
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, kind: UploadKind) => {
         const selectedFile = e.target.files?.[0];
         e.target.value = '';
         if (!selectedFile || uploading) return;
+        if (kind !== 'file' && !selectedFile.type.startsWith("image/")) {
+            alert("Please select an image file");
+            return;
+        }
         if (kind === 'image') {
-            if (!selectedFile.type.startsWith("image/")) {
-                alert("Please select an image file");
-                return;
-            }
             // Offer a 16:9 crop first; the upload runs from the crop dialog.
             setCropFile(selectedFile);
             return;
         }
+        // Banners are never cropped, so they upload as they are.
         await uploadSelected(selectedFile, kind);
     }
 
-    const uploadSelected = async (selectedFile: File, kind: 'file' | 'image') => {
+    const uploadSelected = async (selectedFile: File, kind: UploadKind) => {
         setCropFile(null);
         setUploading(kind);
         setUploadError('');
@@ -137,6 +141,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
             if (!response.ok) throw new Error(data.error || "upload failed on server");
 
             if (kind === 'file') setUrl(data.filelink + "");
+            else if (kind === 'banner') setBannerUrl(data.filelink + "");
             else setImgUrl(data.filelink + "");
         } catch (error) {
             console.log("upload error: " + error);
@@ -146,9 +151,9 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
         }
     }
 
-    const uploadButton = (kind: 'file' | 'image', current: string) => {
-        const id = kind === 'file' ? 'editFileUpload' : 'editImageUpload';
-        const noun = kind === 'file' ? 'file' : 'image';
+    const uploadButton = (kind: UploadKind, current: string) => {
+        const id = kind === 'file' ? 'editFileUpload' : kind === 'banner' ? 'editBannerUpload' : 'editImageUpload';
+        const noun = kind === 'file' ? 'file' : kind === 'banner' ? 'banner' : 'image';
         const label = uploading === kind
             ? `Uploading ${noun}…`
             : `${current.includes("http") ? "Replace" : "Upload"} ${noun}`;
@@ -217,6 +222,12 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
             sm_status: sm_status,
             tags: tags,
         };
+
+        // Only banner items carry a banner image; other items are left untouched.
+        if (selectedEntry?.wtwBanner) {
+            updatePayload.wtwBanner = true;
+            updatePayload.wtwBannerUrl = bannerUrl.trim();
+        }
 
         // Self-edits by the original creator aren't tracked as updates.
         // Legacy entries with no addedBy are always attributed to the editor.
@@ -736,6 +747,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
             setSmDoc(selectedEntry.smdoc ? selectedEntry.smdoc : "");
             setUrl(selectedEntry.url ? selectedEntry.url : "");
             setImgUrl(selectedEntry.img_url ? selectedEntry.img_url : "");
+            setBannerUrl(selectedEntry.wtwBannerUrl ? selectedEntry.wtwBannerUrl : "");
             setDescription(selectedEntry.description ? selectedEntry.description : "");
             setCategory(selectedEntry.category ? selectedEntry.category : "");
             setPlatform(selectedEntry.platform ? selectedEntry.platform : "");
@@ -1071,6 +1083,18 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
                     </div>
 
                 </div>
+
+                {/* Only for items marked "Banner" on the newsletter page */}
+                {selectedEntry?.wtwBanner && (
+                    <div className='w-full flex flex-col py-1 mt-4'>
+                        <label className='text-sm font-medium text-gray-600 px-2'>Banner image URL</label>
+                        <p className='text-xs text-blue-700 px-2'>
+                            Shown full width and uncropped in the newsletter, in place of the image above. Leave empty to use the image above.
+                        </p>
+                        <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setBannerUrl(e.target.value) }} value={bannerUrl}></input>
+                        {canUpload && uploadButton('banner', bannerUrl)}
+                    </div>
+                )}
 
 
                 <div className='w-full flex flex-col py-1 mt-4'>

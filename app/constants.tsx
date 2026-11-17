@@ -86,6 +86,8 @@ export type itemprobes = {
   tags?: string[],
   wtwWeight?: number, // order within its newsletter section: higher comes first
   wtwSingle?: boolean, // keep this item alone on its own row in the newsletter
+  wtwBanner?: boolean, // show only the item's full, uncropped image in its tile (full row only with wtwSingle)
+  wtwBannerUrl?: string, // image used for the banner; falls back to img_url when empty
 }
 
 export const CATEGORIES0 = [
