@@ -707,14 +707,16 @@ function NewsletterCard({ item, showByline, onOpen, order }: { item: itemprobes;
                 {showByline && item.mention && (
                     <p className='pt-[5px] text-sm leading-normal italic' style={{ color: NL.author }}>{item.mention}</p>
                 )}
-                {item.description && (
+                {item.description?.trim() && (
                     <p className='pt-[5px] text-sm leading-[1.2] whitespace-pre-wrap' style={{ color: NL.text }}>
-                        {/* Items with "Read More" show at most 280 characters, then "…" */}
-                        {renderFormatted(link ? truncateFormatted(item.description, 280) : item.description)}
+                        {/* Items with "Read More" show at most 280 characters, then "…".
+                            Trailing blank lines are dropped so they don't push the link down. */}
+                        {renderFormatted(link ? truncateFormatted(item.description.trimEnd(), 280) : item.description.trimEnd())}
                     </p>
                 )}
+                {/* "Read More" on its own line, just below the description */}
                 {link && (
-                    <p className='pt-4 pb-[5px] text-sm leading-[1.2]'>
+                    <p className='pt-2 pb-[5px] text-sm leading-[1.2]'>
                         <a
                             href={link}
                             target='_blank'
