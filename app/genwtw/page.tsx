@@ -7,7 +7,7 @@ import { UserMyAppContext } from '../Context/MyAppContext';
 import { auth, db, listenToItems } from '../firebase/firebase';
 import { categorylist, type itemprobes } from '../constants';
 import { addedDate } from '../../lib/items';
-import { renderFormatted } from '../../lib/richText';
+import { renderFormatted, truncateFormatted } from '../../lib/richText';
 import { convertDriveUrl } from '../../lib/driveUrl';
 import Editform from '../Components/Editform';
 import { WTW_AUDIENCES, type WtwAudience } from '../../lib/wtwAudiences';
@@ -708,8 +708,9 @@ function NewsletterCard({ item, showByline, onOpen, order }: { item: itemprobes;
                     <p className='pt-[5px] text-sm leading-normal italic' style={{ color: NL.author }}>{item.mention}</p>
                 )}
                 {item.description && (
-                    <p className={`pt-[5px] text-sm leading-[1.2] whitespace-pre-wrap ${link ? 'line-clamp-4' : ''}`} style={{ color: NL.text }}>
-                        {renderFormatted(item.description)}
+                    <p className='pt-[5px] text-sm leading-[1.2] whitespace-pre-wrap' style={{ color: NL.text }}>
+                        {/* Items with "Read More" show at most 280 characters, then "…" */}
+                        {renderFormatted(link ? truncateFormatted(item.description, 280) : item.description)}
                     </p>
                 )}
                 {link && (

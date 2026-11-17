@@ -27,6 +27,39 @@ export function stripFormatting(text: string | undefined | null): string {
   return text.replace(TOKEN, (m) => (m.startsWith('**') ? m.slice(2, -2) : m.slice(1, -1)))
 }
 
+/**
+ * Shortens formatted text to `max` visible characters (markers not counted) and adds "…".
+ * Cuts at the last space so words stay whole, and keeps bold/italic markers paired.
+ * Text within the limit is returned unchanged.
+ */
+export function truncateFormatted(text: string | undefined | null, max: number): string {
+  if (!text) return ''
+  if (stripFormatting(text).length <= max) return text
+
+  let out = ''
+  let left = max
+  for (const part of text.split(TOKEN)) {
+    if (!part) continue
+    const isBold = part.startsWith('**') && part.endsWith('**') && part.length > 4
+    const isItalic = !isBold && part.startsWith('*') && part.endsWith('*') && part.length > 2
+    const marker = isBold ? '**' : isItalic ? '*' : ''
+    const inner = marker ? part.slice(marker.length, -marker.length) : part
+
+    if (inner.length <= left) {
+      out += part
+      left -= inner.length
+      continue
+    }
+    let cut = inner.slice(0, left)
+    const lastSpace = cut.lastIndexOf(' ')
+    if (lastSpace > 0) cut = cut.slice(0, lastSpace)
+    cut = cut.trimEnd()
+    if (cut) out += marker + cut + marker
+    break
+  }
+  return out.trimEnd() + '…'
+}
+
 const escapeHtml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
