@@ -15,6 +15,8 @@ import type { SMComment, CommentReply, HistoryEventType } from '../smcal/types'
 import dayjs from '../../lib/dayjs'
 import { IST } from '../../lib/dayjs'
 import { notify } from '../../lib/notifications'
+import SlideTextPanel from './SlideTextPanel'
+import DiffView from './DiffView'
 
 interface CurrentUser {
   uid: string
@@ -34,6 +36,8 @@ interface Props {
   postTitle: string
   creatorEmail?: string
   assigneeEmail?: string
+  // When set, shows the OCR "Slide text" panel for this image above the comments
+  slideImageUrl?: string
 }
 
 function Avatar({ name, size = 6 }: { name: string; size?: number }) {
@@ -76,6 +80,7 @@ export default function CommentThread({
   postTitle,
   creatorEmail,
   assigneeEmail,
+  slideImageUrl,
 }: Props) {
   const [newText,      setNewText]      = useState('')
   const [replyDrafts,  setReplyDrafts]  = useState<Record<string, string>>({})
@@ -115,30 +120,36 @@ export default function CommentThread({
   }
 
   // ── Add top-level comment ──────────────────────────────────────────────────
+  const postComment = async (text: string, suggestion?: SMComment['suggestion']) => {
+    if (!currentUser) return
+    await addDoc(collection(firestore, 'posts', postId, 'comments'), {
+      target,
+      authorUid:   currentUser.uid,
+      authorName:  currentUser.displayName || 'User',
+      authorPhoto: currentUser.photoURL || '',
+      authorEmail: currentUser.email || '',
+      text,
+      createdAt:   serverTimestamp(),
+      resolved:    false,
+      replies:     [],
+      ...(suggestion ? { suggestion } : {}),
+    })
+    const previousCommenters = comments.map((c) => c.authorEmail).filter((e): e is string => !!e)
+    await notify({
+      recipients: [creatorEmail, assigneeEmail, ...previousCommenters],
+      actor: notifyActor,
+      type: 'comment_added',
+      postId,
+      postTitle,
+      message: `${notifyActor.name} ${suggestion ? 'suggested a slide text edit' : 'commented'} on "${postTitle}"`,
+    })
+  }
+
   const addComment = async () => {
     if (!newText.trim() || !currentUser) return
     setSubmitting(true)
     try {
-      await addDoc(collection(firestore, 'posts', postId, 'comments'), {
-        target,
-        authorUid:   currentUser.uid,
-        authorName:  currentUser.displayName || 'User',
-        authorPhoto: currentUser.photoURL || '',
-        authorEmail: currentUser.email || '',
-        text:        newText.trim(),
-        createdAt:   serverTimestamp(),
-        resolved:    false,
-        replies:     [],
-      })
-      const previousCommenters = comments.map((c) => c.authorEmail).filter((e): e is string => !!e)
-      await notify({
-        recipients: [creatorEmail, assigneeEmail, ...previousCommenters],
-        actor: notifyActor,
-        type: 'comment_added',
-        postId,
-        postTitle,
-        message: `${notifyActor.name} commented on "${postTitle}"`,
-      })
+      await postComment(newText.trim())
       setNewText('')
     } finally {
       setSubmitting(false)
@@ -272,6 +283,15 @@ export default function CommentThread({
         </div>
       )}
 
+      {slideImageUrl && (
+        <SlideTextPanel
+          postId={postId}
+          imageUrl={slideImageUrl}
+          canSuggest={!!currentUser}
+          onSuggest={(before, after) => postComment('Suggested edit to slide text', { before, after })}
+        />
+      )}
+
       {/* Comment list */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
         {unresolved.length === 0 && resolved.length === 0 && (
@@ -328,7 +348,24 @@ export default function CommentThread({
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-gray-700 mt-0.5 leading-relaxed">{comment.text}</p>
+                <>
+                  <p className="text-xs text-gray-700 mt-0.5 leading-relaxed">{comment.text}</p>
+                  {comment.suggestion && (
+                    <div className="mt-1.5">
+                      <DiffView
+                        before={comment.suggestion.before}
+                        after={comment.suggestion.after}
+                        label="Suggested slide text"
+                      />
+                      <button
+                        onClick={() => navigator.clipboard.writeText(comment.suggestion!.after)}
+                        className="text-[10px] text-blue-500 hover:text-blue-700 mt-1"
+                      >
+                        Copy suggested text
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Action row (hidden while editing) */}

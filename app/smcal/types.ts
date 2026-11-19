@@ -56,6 +56,8 @@ export type SMComment = {
   editedAt?: Timestamp | null
   editHistory?: Array<{ text: string; editedAt: Timestamp }>
   authorEmail?: string
+  // Set when the comment is a suggested edit to a slide's OCR'd text
+  suggestion?: { before: string; after: string }
 }
 
 export type HistoryEventType =

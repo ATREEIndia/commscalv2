@@ -4,15 +4,16 @@ import { diffLines } from 'diff'
 interface Props {
   before: string
   after: string
+  label?: string
 }
 
-export default function DiffView({ before, after }: Props) {
+export default function DiffView({ before, after, label = 'Body copy diff' }: Props) {
   const changes = diffLines(before || '', after || '')
 
   return (
     <div className="font-mono text-xs rounded-lg overflow-hidden border border-gray-200">
       <div className="bg-gray-50 px-3 py-1.5 border-b border-gray-200 text-gray-400 text-[10px] font-sans tracking-wide uppercase">
-        Body copy diff
+        {label}
       </div>
       <div className="overflow-x-auto max-h-64 overflow-y-auto">
         {changes.map((change, i) => {

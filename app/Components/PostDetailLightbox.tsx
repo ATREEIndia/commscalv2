@@ -115,6 +115,7 @@ export default function PostDetailLightbox({
     if (images[currentIndex + 1]) preload(images[currentIndex + 1])
   }, [currentIndex, images])
 
+  const currentIsVideo = useMediaType(images[currentIndex]) === 'video'
   const target = `image:${currentIndex}`
   const targetComments = comments.filter((c) => c.target === target)
   const unresolvedCount = targetComments.filter((c) => !c.resolved).length
@@ -217,6 +218,7 @@ export default function PostDetailLightbox({
             postTitle={postTitle}
             creatorEmail={creatorEmail}
             assigneeEmail={assigneeEmail}
+            slideImageUrl={currentIsVideo ? undefined : images[currentIndex]}
           />
         </div>
       )}
