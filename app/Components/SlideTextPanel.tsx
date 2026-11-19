@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { getCachedSlideText, scanSlideText } from '../../lib/slideOcr'
+import { getSlideText } from '../../lib/slideOcr'
 
 interface Props {
   postId: string
@@ -9,7 +9,7 @@ interface Props {
   onSuggest: (before: string, after: string) => Promise<void>
 }
 
-type Status = 'idle' | 'checking' | 'scanning' | 'ready' | 'error'
+type Status = 'idle' | 'scanning' | 'ready' | 'error'
 
 // Collapsible "Slide text" box shown above a slide's comments. Pulls the text off
 // the image with OCR so reviewers can copy it, or edit it and post the change as a
@@ -17,7 +17,6 @@ type Status = 'idle' | 'checking' | 'scanning' | 'ready' | 'error'
 export default function SlideTextPanel({ postId, imageUrl, canSuggest, onSuggest }: Props) {
   const [open, setOpen]         = useState(false)
   const [status, setStatus]     = useState<Status>('idle')
-  const [progress, setProgress] = useState(0)
   const [original, setOriginal] = useState('')
   const [draft, setDraft]       = useState('')
   const [error, setError]       = useState('')
@@ -26,19 +25,17 @@ export default function SlideTextPanel({ postId, imageUrl, canSuggest, onSuggest
 
   // Each slide has its own text — reset when the lightbox moves to another one.
   useEffect(() => {
-    setStatus('idle'); setOriginal(''); setDraft(''); setError(''); setProgress(0)
+    setStatus('idle'); setOriginal(''); setDraft(''); setError('')
+    // Keep the panel open across slides: fetch the new slide's text right away.
+    if (open) load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [imageUrl])
 
   const load = async (force = false) => {
     setError('')
+    setStatus('scanning')
     try {
-      if (!force) {
-        setStatus('checking')
-        const cached = await getCachedSlideText(postId, imageUrl)
-        if (cached !== null) { setOriginal(cached); setDraft(cached); setStatus('ready'); return }
-      }
-      setStatus('scanning'); setProgress(0)
-      const text = await scanSlideText(postId, imageUrl, setProgress)
+      const text = await getSlideText(postId, imageUrl, force)
       setOriginal(text); setDraft(text); setStatus('ready')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not read text from this slide.')
@@ -69,7 +66,7 @@ export default function SlideTextPanel({ postId, imageUrl, canSuggest, onSuggest
   }
 
   const changed = draft.trim() !== original.trim() && draft.trim() !== ''
-  const busy = status === 'checking' || status === 'scanning'
+  const busy = status === 'scanning'
   const btn = 'text-[10px] px-2 py-1 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed'
 
   return (
@@ -87,7 +84,7 @@ export default function SlideTextPanel({ postId, imageUrl, canSuggest, onSuggest
         <div className="px-4 pb-3">
           {busy && (
             <p className="text-[11px] text-gray-400 py-2">
-              {status === 'checking' ? 'Loading…' : `Reading text from slide… ${progress}%`}
+              Reading text from slide…
             </p>
           )}
 
