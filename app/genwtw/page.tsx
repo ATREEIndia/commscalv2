@@ -10,8 +10,8 @@ import { addedDate } from '../../lib/items';
 import { renderFormatted, stripFormatting, truncateFormatted } from '../../lib/richText';
 import { convertDriveUrl } from '../../lib/driveUrl';
 import Editform from '../Components/Editform';
+import MondayPicker from '../Components/MondayPicker';
 import { WTW_AUDIENCES, type WtwAudience } from '../../lib/wtwAudiences';
-import {  addWeeks, nextMonday as getNextMonday } from 'date-fns'
 
 type RunResult = { ok: boolean; audience: WtwAudience; status?: number; data?: unknown; error?: string }
 
@@ -82,25 +82,10 @@ const NL = {
 }
 
 // The newsletter is built on Monday for the previous Monday–Sunday.
+// Default: today if it's a Monday, otherwise the most recent Monday.
 const latestMonday = () => {
     const today = new Date()
     return format(isMonday(today) ? today : previousMonday(today), 'yyyy-MM-dd')
-}
-// const nextMonday = () => {
-//     const today = new Date()
-
-//     return format(
-//         isMonday(today) ? addWeeks(today, 1) : getNextMonday(today),
-//         'yyyy-MM-dd'
-//     )
-// }
-const nextMonday = () => {
-    const today = new Date()
-
-    return format(
-        isMonday(today) ? today : getNextMonday(today),
-        'yyyy-MM-dd'
-    )
 }
 
 const Page = () => {
@@ -110,7 +95,7 @@ const Page = () => {
     // Guests only ever get view: they see the preview but can't send, reorder, edit or skip.
     const viewOnly = access('genwtw') !== 'edit'
 
-    const [date, setDate] = useState(nextMonday)
+    const [date, setDate] = useState(latestMonday)
     const [force, setForce] = useState(true)
     const [running, setRunning] = useState<WtwAudience | null>(null)
     const [audience, setAudience] = useState<WtwAudience>('test')
@@ -332,21 +317,10 @@ const Page = () => {
                             <section className='bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 flex flex-col gap-4'>
                                 <div className='flex flex-col gap-1.5'>
                                     <label htmlFor='wtw-date' className='text-sm font-medium text-gray-700'>Newsletter date</label>
-                                    <input
-                                        id='wtw-date'
-                                        type='date'
-                                        value={date}
-                                        onChange={(e) => setDate(e.target.value)}
-                                        className='w-full sm:w-60 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300'
-                                    />
+                                    <MondayPicker id='wtw-date' value={date} onChange={setDate} />
                                     {coverage && (
                                         <p className='text-xs text-gray-500'>
                                             Covers submissions from <b>{format(coverage.from, 'EEE dd MMM')}</b> to <b>{format(coverage.to, 'EEE dd MMM yyyy')}</b>.
-                                        </p>
-                                    )}
-                                    {coverage && !coverage.monday && (
-                                        <p className='text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1'>
-                                            The newsletter is normally built on a Monday.
                                         </p>
                                     )}
                                 </div>
