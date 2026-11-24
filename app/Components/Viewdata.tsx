@@ -436,7 +436,7 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail, readOnly = f
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Title</label>
-                    <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setTitle(e.target.value) }} value={title}></input>
+                    <FormattedTextarea singleLine allowBold={false} className='w-full p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={setTitle} value={title} />
                 </div>
 
                 <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>

@@ -13,6 +13,7 @@ import { UserMyAppContext } from '../Context/MyAppContext';
 import TagInput from './TagInput';
 import ImageCropModal from './ImageCropModal';
 import FormattedTextarea from './FormattedTextarea';
+import { renderFormatted } from '../../lib/richText';
 
 type Props = {
 
@@ -921,7 +922,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Title</label>
-                    <input disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`p-2 border-2  ${title_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setTitle(e.target.value) }} value={title}></input>
+                    <FormattedTextarea singleLine allowBold={false} disabled={!isRegUser && selectedEntry?.addedBy != userEmail} className={`w-full p-2 border-2  ${title_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} onChange={setTitle} value={title} />
                 </div>
 
                 <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>
@@ -1241,7 +1242,7 @@ const Editform = ({ changeformvisibility, selectedEntry, showToast, user, showSk
                     <div className='bg-white rounded-2xl shadow-2xl w-full max-w-md p-5 sm:p-6 flex flex-col gap-4'>
                         <h2 id='smcal-prompt-title' className='text-lg font-bold text-gray-800'>Add to SM Cal now?</h2>
                         <div className='text-sm text-gray-600 flex flex-col gap-1'>
-                            <p>There is no SM Cal post for <b>{title}</b> yet.</p>
+                            <p>There is no SM Cal post for <b>{renderFormatted(title)}</b> yet.</p>
                             <p className='text-xs text-gray-500'>If you skip this, it stays under Pending Tasks on SM Cal so you can create the post later.</p>
                         </div>
                         <div className='flex flex-col-reverse sm:flex-row sm:justify-end gap-2'>

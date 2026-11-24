@@ -839,7 +839,7 @@ const Page = () => {
     const downloadExcel = () => {
         const rows = filteredEntries.map((entry) => ({
             Date: entry.date ? format(new Date(entry.date), 'dd MMM yyyy') : '',
-            Title: entry.title || '',
+            Title: stripFormatting(entry.title),
             description: stripFormatting(entry.description),
             mentions: entry.mention || '',
             Url: entry.url || '',
@@ -1027,7 +1027,7 @@ const Page = () => {
                                             {entry.date ? format(new Date(entry.date), 'dd MMM yyyy') : ''}
                                         </td>
                                         <td className='px-4 py-3 align-top whitespace-nowrap'>{entry.category}</td>
-                                        <td className='px-4 py-3 align-top max-w-[260px]'>{entry.title}</td>
+                                        <td className='px-4 py-3 align-top max-w-[260px]'>{renderFormatted(entry.title)}</td>
                                         <td className='px-4 py-3 align-top max-w-[320px] text-gray-600 whitespace-pre-wrap'>
                                             {renderFormatted(entry.description)}
                                         </td>
@@ -1072,7 +1072,7 @@ const Page = () => {
                                     </span>
                                 </div>
 
-                                <p className='text-sm font-medium text-gray-800 break-words'>{entry.title}</p>
+                                <p className='text-sm font-medium text-gray-800 break-words'>{renderFormatted(entry.title)}</p>
 
                                 {entry.description && (
                                     <p className='text-xs text-gray-600 break-words line-clamp-3'>{renderFormatted(entry.description)}</p>

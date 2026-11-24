@@ -15,7 +15,7 @@ import { useEnvDays } from '../hooks/useEnvDays'
 import type { SMPost } from './types'
 import { useRouter } from 'next/navigation'
 import { Divide, X } from 'lucide-react'
-import { stripFormatting } from '../../lib/richText'
+import { renderFormatted, stripFormatting } from '../../lib/richText'
 import { UserMyAppContext } from '../Context/MyAppContext'
 
 
@@ -152,7 +152,7 @@ export default function SmCalPage() {
     const assignedUser = users.find((u) => u.email === firstAssignee)
     setTaskPrefillForNewPost({
       taskId: task.id || '',
-      title: task.title || '',
+      title: stripFormatting(task.title),
       // Social media copy can't show bold/italic, so drop the markers.
       bodyCopy: `${stripFormatting(task.description)}\n${task.url}` || '',
       assignedTo: firstAssignee,
@@ -299,7 +299,7 @@ export default function SmCalPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="text-sm font-medium text-gray-800 truncate">
-                          {task.title}
+                          {renderFormatted(task.title)}
                         </p>
 
                         {task.deadline && (

@@ -13,6 +13,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import Editform from '../Components/Editform';
 import Viewdata from '../Components/Viewdata';
 import { UserMyAppContext } from '../Context/MyAppContext';
+import { renderFormatted } from '../../lib/richText';
 
 
 
@@ -196,7 +197,7 @@ const Page = () => {
                         <div key={index} className='w-full flex flex-col p-2 mx-4 mt-2 bg-white  border-2 rounded-xl border-gray-200' onClick={() => manageeditform(item)}>
 
 
-                            <h1 className='text-sm font-semibold text-gray-700'> {item.title}   </h1>
+                            <h1 className='text-sm font-semibold text-gray-700'> {renderFormatted(item.title)}   </h1>
                             {/* <div className='text-sm text-gray-800'>{item.smTitle}</div> */}
                             <div className='flex gap-4 justify-between mt-4'>
                                 <div className='flex flex-col'>
@@ -245,7 +246,7 @@ const Page = () => {
                         <div key={index} className='w-full flex flex-col p-2 mx-4 mt-2 bg-white  border-2 rounded-xl border-gray-200' onClick={() => manageeditform(item)}>
 
 
-                            <h1 className='text-sm font-semibold text-gray-700'> {item.title}   </h1>
+                            <h1 className='text-sm font-semibold text-gray-700'> {renderFormatted(item.title)}   </h1>
                             {/* <div className='text-sm text-gray-800'>{item.smTitle}</div> */}
                             <div className='flex gap-4 justify-between mt-4'>
                                 <div className='flex flex-col'>
@@ -294,7 +295,7 @@ const Page = () => {
                         <div key={index} className='w-full flex flex-col p-2 mx-4 mt-2 bg-white  border-2 rounded-xl border-gray-200' onClick={() => manageeditform(item)}>
 
 
-                            <h1 className='text-sm font-semibold text-gray-700'> {item.title}   </h1>
+                            <h1 className='text-sm font-semibold text-gray-700'> {renderFormatted(item.title)}   </h1>
                             {/* <div className='text-sm text-gray-800'>{item.smTitle}</div> */}
                             <div className='flex gap-4 justify-between mt-4'>
                                 <div className='flex flex-col'>
@@ -343,7 +344,7 @@ const Page = () => {
                         <div key={index} className='w-full flex flex-col p-2 mx-4 mt-2 bg-white  border-2 rounded-xl border-gray-200' onClick={()=>manageeditform(item)} >
                             
 
-                            <h1 className='text-sm font-semibold text-gray-700'> {item.title}   </h1>
+                            <h1 className='text-sm font-semibold text-gray-700'> {renderFormatted(item.title)}   </h1>
                             <div className='text-sm text-gray-800'>{item.smTitle}</div>
                             <div className='flex gap-4 justify-between mt-4'>
                                 <div className='flex flex-col'>
@@ -385,7 +386,7 @@ const Page = () => {
                         <div key={index} className='w-full flex flex-col p-2 mx-4 mt-2 bg-white  border-2 rounded-xl border-gray-200' onClick={()=>manageeditform(item)}>
                             
 
-                            <h1 className='text-sm font-semibold text-gray-700'> {item.title}   </h1>
+                            <h1 className='text-sm font-semibold text-gray-700'> {renderFormatted(item.title)}   </h1>
                             <div className='text-sm text-gray-800'>{item.smTitle}</div>
                             <div className='flex gap-4 justify-between mt-4'>
                                 <div className='flex flex-col'>

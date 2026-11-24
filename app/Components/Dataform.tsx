@@ -542,7 +542,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Title *</label>
-                    <input className={`p-2 border-2  ${title_error ? "border-red-200" : "border-gray-100"}  rounded-xl shadow text-sm`} type='text' onChange={(e) => { setTitle(e.target.value) }} value={title}></input>
+                    <FormattedTextarea singleLine allowBold={false} className={`w-full p-2 border-2  ${title_error ? "border-red-200" : "border-gray-100"}  rounded-xl shadow text-sm`} onChange={setTitle} value={title} />
                 </div>
 
                 {/* <div className='w-full flex flex-col py-1 mt-4'>

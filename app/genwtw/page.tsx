@@ -7,7 +7,7 @@ import { UserMyAppContext } from '../Context/MyAppContext';
 import { auth, db, listenToItems } from '../firebase/firebase';
 import { categorylist, type itemprobes } from '../constants';
 import { addedDate } from '../../lib/items';
-import { renderFormatted, truncateFormatted } from '../../lib/richText';
+import { renderFormatted, stripFormatting, truncateFormatted } from '../../lib/richText';
 import { convertDriveUrl } from '../../lib/driveUrl';
 import Editform from '../Components/Editform';
 import { WTW_AUDIENCES, type WtwAudience } from '../../lib/wtwAudiences';
@@ -431,7 +431,7 @@ const Page = () => {
                                                         className='flex-1 min-w-0 text-left disabled:cursor-default'
                                                         title={viewOnly ? undefined : 'Click to edit'}
                                                     >
-                                                        <span className='block text-sm text-gray-800 truncate'>{item.title}</span>
+                                                        <span className='block text-sm text-gray-800 truncate'>{renderFormatted(item.title)}</span>
                                                         <span className='block text-[11px] text-gray-500'>{sectionOf(item.category)}</span>
                                                     </button>
                                                     {!viewOnly && <button
@@ -720,7 +720,7 @@ function NewsletterCard({ item, showByline, onOpen, order }: { item: itemprobes;
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                     src={bannerImage}
-                    alt={item.title || ''}
+                    alt={stripFormatting(item.title)}
                     loading='lazy'
                     referrerPolicy='no-referrer'
                     onError={(e) => { e.currentTarget.style.display = 'none' }}
@@ -741,7 +741,7 @@ function NewsletterCard({ item, showByline, onOpen, order }: { item: itemprobes;
                 </div>
             )}
             <div className='pt-[5px] break-words'>
-                <p className='text-base leading-[1.2] font-bold' style={{ color: NL.accent }}>{item.title}</p>
+                <p className='text-base leading-[1.2] font-bold' style={{ color: NL.accent }}>{renderFormatted(item.title)}</p>
                 {showByline && item.platform && (
                     <p className='text-base leading-[1.2] font-bold italic' style={{ color: NL.text }}>{item.platform}</p>
                 )}

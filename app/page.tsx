@@ -75,7 +75,7 @@ function ItemsPopup({
                   {/* Title */}
                   <p onClick={() => window.open(item.url, "_blank", "noopener,noreferrer")}
                     className="font-semibold text-gray-800 text-sm truncate cursor-pointer hover:text-blue-700">
-                    {item.title ?? "Untitled Item"}
+                    {item.title ? renderFormatted(item.title) : "Untitled Item"}
                   </p>
 
                   {/* Meta */}
@@ -256,7 +256,7 @@ function TasksPopup({
                     {/* Title + badges */}
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <p className="font-semibold text-sm text-gray-800 group-hover:text-indigo-600 transition-colors truncate">
-                        {task.title}
+                        {renderFormatted(task.title)}
                       </p>
                       <span className={`text-xs px-2 py-0.5 rounded-full border font-medium flex-shrink-0 ${pc.badge}`}>
                         {pc.label}
@@ -863,7 +863,7 @@ export default function Home() {
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2 mb-1">
                             <h3 className="font-semibold text-gray-800 text-sm sm:text-base group-hover:text-indigo-600 transition-colors truncate">
-                              {task.title}
+                              {renderFormatted(task.title)}
                             </h3>
                             <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${task.current_status == "Posted" ? "hidden" : "flex"}  ${pConf.bg} ${pConf.text} ${pConf.border} flex-shrink-0`}>
                               {pConf.label}

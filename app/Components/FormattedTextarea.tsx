@@ -8,6 +8,10 @@ type Props = {
   disabled?: boolean
   className?: string
   placeholder?: string
+  /** One line only (Enter is ignored, pasted line breaks become spaces), e.g. for titles. */
+  singleLine?: boolean
+  /** Set false to allow italic only (no bold button, Ctrl+B ignored). */
+  allowBold?: boolean
 }
 
 type Run = { text: string; bold: boolean; italic: boolean }
@@ -15,7 +19,7 @@ type Run = { text: string; bold: boolean; italic: boolean }
 // Reads the editor's DOM back into the stored format (**bold**, *italic*, \n).
 // Works on runs of text so whatever markup the browser produces (<b>, <strong>,
 // <i>, <em>, styled spans, <div> lines) is normalised the same way.
-function serialize(root: HTMLElement): string {
+function serialize(root: HTMLElement, allowBold = true): string {
   const runs: Run[] = []
   const push = (text: string, bold: boolean, italic: boolean) => {
     const last = runs[runs.length - 1]
@@ -32,10 +36,10 @@ function serialize(root: HTMLElement): string {
     const tag = node.tagName
     if (tag === 'BR') { push('\n', bold, italic); return }
 
-    let b = bold || tag === 'B' || tag === 'STRONG'
+    let b = allowBold && (bold || tag === 'B' || tag === 'STRONG')
     let i = italic || tag === 'I' || tag === 'EM'
     const weight = node.style.fontWeight
-    if (weight === 'bold' || Number(weight) >= 600) b = true
+    if (allowBold && (weight === 'bold' || Number(weight) >= 600)) b = true
     if (weight === 'normal' || (Number(weight) > 0 && Number(weight) < 600)) b = false
     if (node.style.fontStyle === 'italic') i = true
     if (node.style.fontStyle === 'normal') i = false
@@ -80,7 +84,7 @@ const toHtml = (value: string) => {
 // Rich text box: bold/italic show directly while typing (B / I buttons or
 // Ctrl/Cmd+B, Ctrl/Cmd+I). The value it reads and writes is plain text with
 // **bold** and *italic* markers — see lib/richText.
-export default function FormattedTextarea({ value, onChange, disabled, className = '', placeholder }: Props) {
+export default function FormattedTextarea({ value, onChange, disabled, className = '', placeholder, singleLine = false, allowBold = true }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const lastValue = useRef<string | null>(null)
   const [active, setActive] = useState({ bold: false, italic: false })
@@ -97,7 +101,8 @@ export default function FormattedTextarea({ value, onChange, disabled, className
   const emit = () => {
     const el = ref.current
     if (!el) return
-    const next = serialize(el)
+    let next = serialize(el, allowBold)
+    if (singleLine) next = next.replace(/\n/g, ' ')
     lastValue.current = next
     if (next !== value) onChange(next)
   }
@@ -126,15 +131,16 @@ export default function FormattedTextarea({ value, onChange, disabled, className
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter') {
-      // Plain line breaks instead of <div> blocks.
       e.preventDefault()
+      if (singleLine) return
+      // Plain line breaks instead of <div> blocks.
       document.execCommand('insertLineBreak')
       emit()
       return
     }
     if (!(e.ctrlKey || e.metaKey)) return
     const key = e.key.toLowerCase()
-    if (key === 'b') { e.preventDefault(); format('bold') }
+    if (key === 'b') { e.preventDefault(); if (allowBold) format('bold') }
     if (key === 'i') { e.preventDefault(); format('italic') }
     if (key === 'u') e.preventDefault() // underline can't be stored
   }
@@ -142,7 +148,9 @@ export default function FormattedTextarea({ value, onChange, disabled, className
   // Paste as plain text so formatting from Word/Docs doesn't come along.
   const onPaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
     e.preventDefault()
-    document.execCommand('insertText', false, e.clipboardData.getData('text/plain'))
+    let text = e.clipboardData.getData('text/plain')
+    if (singleLine) text = text.replace(/\s*[\r\n]+\s*/g, ' ')
+    document.execCommand('insertText', false, text)
     emit()
   }
 
@@ -151,18 +159,20 @@ export default function FormattedTextarea({ value, onChange, disabled, className
 
   return (
     <div className='flex flex-col gap-1'>
-      {!disabled && (
+      {!disabled && !singleLine && (
         <div className='flex items-center gap-1 px-1'>
-          <button
-            type='button'
-            onMouseDown={(e) => e.preventDefault()} // keep the editor selection
-            onClick={() => format('bold')}
-            className={`${buttonClass(active.bold)} font-bold`}
-            title='Bold (Ctrl+B)'
-            aria-pressed={active.bold}
-          >
-            B
-          </button>
+          {allowBold && (
+            <button
+              type='button'
+              onMouseDown={(e) => e.preventDefault()} // keep the editor selection
+              onClick={() => format('bold')}
+              className={`${buttonClass(active.bold)} font-bold`}
+              title='Bold (Ctrl+B)'
+              aria-pressed={active.bold}
+            >
+              B
+            </button>
+          )}
           <button
             type='button'
             onMouseDown={(e) => e.preventDefault()}
@@ -178,7 +188,7 @@ export default function FormattedTextarea({ value, onChange, disabled, className
       <div
         ref={ref}
         role='textbox'
-        aria-multiline='true'
+        aria-multiline={singleLine ? 'false' : 'true'}
         contentEditable={!disabled}
         suppressContentEditableWarning
         data-placeholder={placeholder}
@@ -186,7 +196,7 @@ export default function FormattedTextarea({ value, onChange, disabled, className
         onBlur={emit}
         onKeyDown={onKeyDown}
         onPaste={onPaste}
-        className={`min-h-[4.5rem] whitespace-pre-wrap break-words outline-none focus:ring-2 focus:ring-blue-200
+        className={`${singleLine ? '' : 'min-h-[4.5rem]'} whitespace-pre-wrap break-words outline-none focus:ring-2 focus:ring-blue-200
           empty:before:content-[attr(data-placeholder)] empty:before:text-gray-400
           ${disabled ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'bg-white'} ${className}`}
       />

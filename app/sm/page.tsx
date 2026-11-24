@@ -5,6 +5,7 @@ import Rightcontainer from '../Components/Rightcontainer'
 import {listenToItems, getRegistedUsers, getAllTasks, listenToTasks} from "../firebase/firebase";
 import { useState, useEffect } from 'react'
 import { itemprobes } from '../constants'
+import { renderFormatted } from '../../lib/richText'
 
 const Page = () => {
 
@@ -29,7 +30,7 @@ const Page = () => {
       {/* SM Plan content */}
       <div className="flex flex-2 flex-col w-full h-full justify-start items-center p-4 gap-4">
         {tasks.map((task,index)=>(
-          <div key={index}>{task.title}</div>
+          <div key={index}>{renderFormatted(task.title)}</div>
         ))}
       </div>
 

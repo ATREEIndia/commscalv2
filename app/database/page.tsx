@@ -16,6 +16,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { UserMyAppContext } from '../Context/MyAppContext';
 import { addedDate } from '../../lib/items';
 import { Calendar1, CalendarArrowDownIcon, CalendarArrowUpIcon, CalendarCheck, Database } from 'lucide-react';
+import { renderFormatted } from '../../lib/richText';
 
 
 const Page = () => {
@@ -562,7 +563,7 @@ const Page = () => {
                                         })}
                                     </div>
 
-                                    <h2 className='w-[20%] cursor-pointer  text-center whitespace-normal break-words  max-h-[100px] overflow-clip  text-sm' onClick={() => { manageeditform(entry) }}>{entry.title} </h2>
+                                    <h2 className='w-[20%] cursor-pointer  text-center whitespace-normal break-words  max-h-[100px] overflow-clip  text-sm' onClick={() => { manageeditform(entry) }}>{renderFormatted(entry.title)} </h2>
                                     <p className='w-[20%]   text-sm text-center whitespace-normal break-words max-h-[100px] overflow-clip '>{entry.mention}</p>
 
 
@@ -626,7 +627,7 @@ const Page = () => {
                                     </h1>
 
                                 </div>
-                                <div className='text-[12px]'>{entry.title}</div>
+                                <div className='text-[12px]'>{renderFormatted(entry.title)}</div>
                                 <div className='text-[10px]'>{entry.mention}</div>
 
 
