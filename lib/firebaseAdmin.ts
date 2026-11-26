@@ -1,6 +1,7 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app'
 import { getFirestore, type Firestore } from 'firebase-admin/firestore'
 import { getAuth, type Auth } from 'firebase-admin/auth'
+import { getDatabase, type Database } from 'firebase-admin/database'
 
 function ensureApp() {
   if (getApps().length === 0) {
@@ -10,8 +11,15 @@ function ensureApp() {
         clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL!,
         privateKey:  process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n')!,
       }),
+      databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
     })
   }
+}
+
+// Realtime Database with admin rights (bypasses security rules). Request time only.
+export function getAdminRtdb(): Database {
+  ensureApp()
+  return getDatabase()
 }
 
 function getDb(): Firestore {

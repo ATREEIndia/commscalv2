@@ -1,8 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { adminDb, getAdminAuth } from '../../../lib/firebaseAdmin'
+import { adminDb, getAdminAuth, getAdminRtdb } from '../../../lib/firebaseAdmin'
 import { WTW_AUDIENCES, isWtwAudience } from '../../../lib/wtwAudiences'
 
 const NEWSLETTER_URL = 'https://asia-south1-resourcehub-d7764.cloudfunctions.net/runNewsletter'
+
+// Status of the edition for ?date=yyyy-MM-dd, from RTDB newsletterRuns/{date}
+// (written by the newsletter service; clients can't read it directly). Any signed-in user.
+export async function GET(req: NextRequest) {
+  const idToken = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
+  if (!idToken) return NextResponse.json({ error: 'Please sign in.' }, { status: 401 })
+  try {
+    await getAdminAuth().verifyIdToken(idToken)
+  } catch {
+    return NextResponse.json({ error: 'Your session has expired. Please sign in again.' }, { status: 401 })
+  }
+  const date = req.nextUrl.searchParams.get('date') ?? ''
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return NextResponse.json({ error: 'Please pick a valid date.' }, { status: 400 })
+  }
+  try {
+    const run = (await getAdminRtdb().ref(`newsletterRuns/${date}`).get()).val()
+    return NextResponse.json({
+      date,
+      status: typeof run?.status === 'string' ? run.status : null,
+      at: typeof run?.at === 'number' ? run.at : null,
+    })
+  } catch (error) {
+    console.error('Reading newsletterRuns failed:', error)
+    return NextResponse.json({ error: 'Could not read the newsletter status.' }, { status: 502 })
+  }
+}
 
 // Runs the WTW newsletter build. The run token stays on the server; callers must
 // be signed in as an admin (reg_users/{email}.role === 'admin').

@@ -95,7 +95,41 @@ const Page = () => {
     // Guests only ever get view: they see the preview but can't send, reorder, edit or skip.
     const viewOnly = access('genwtw') !== 'edit'
 
-    const [date, setDate] = useState(latestMonday)
+    const [date, setDateState] = useState(latestMonday)
+    // Once someone picks a date, stop moving the default.
+    const dateTouched = useRef(false)
+    const setDate = (value: string) => { dateTouched.current = true; setDateState(value) }
+
+    // The newsletter service records each run in RTDB at newsletterRuns/{yyyy-MM-dd};
+    // status "sent" means that edition has gone out. Clients can't read that path, so
+    // it's fetched through /api/genwtw. `statusCheck` bumps to re-check after a send.
+    const [sentAt, setSentAt] = useState<number | null>(null)
+    const [statusCheck, setStatusCheck] = useState(0)
+    useEffect(() => {
+        if (!user || !date) return
+        let cancelled = false
+        setSentAt(null)
+        ;(async () => {
+            try {
+                const idToken = await auth.currentUser?.getIdToken()
+                if (!idToken) return
+                const res = await fetch(`/api/genwtw?date=${date}`, { headers: { Authorization: `Bearer ${idToken}` } })
+                const run = await res.json().catch(() => null) as { status?: string | null; at?: number | null; error?: string } | null
+                if (cancelled) return
+                if (!res.ok) { console.error('Checking newsletter status failed:', run?.error ?? res.status); return }
+                const isSent = run?.status === 'sent'
+                // Default date: if this week's edition is already sent, move to the next Monday.
+                if (isSent && !dateTouched.current && date === latestMonday()) {
+                    setDateState(format(addDays(parseISO(date), 7), 'yyyy-MM-dd'))
+                    return
+                }
+                setSentAt(isSent ? (run?.at ?? 0) : null)
+            } catch (error) {
+                console.error('Checking newsletter status failed:', error)
+            }
+        })()
+        return () => { cancelled = true }
+    }, [user, date, statusCheck])
     const [force, setForce] = useState(true)
     const [running, setRunning] = useState<WtwAudience | null>(null)
     const [audience, setAudience] = useState<WtwAudience>('test')
@@ -269,6 +303,7 @@ const Page = () => {
                 body: JSON.stringify({ date, audience, force, ...(isSend ? { confirmSend: true } : {}) }),
             })
             const json = await res.json().catch(() => ({}))
+            if (res.ok && isSend) setStatusCheck((n) => n + 1)
             setResult(res.ok
                 ? { ok: true, audience, status: json.status, data: json.data }
                 : { ok: false, audience, status: json.status ?? res.status, data: json.data, error: json.error })
@@ -321,6 +356,11 @@ const Page = () => {
                                     {coverage && (
                                         <p className='text-xs text-gray-500'>
                                             Covers submissions from <b>{format(coverage.from, 'EEE dd MMM')}</b> to <b>{format(coverage.to, 'EEE dd MMM yyyy')}</b>.
+                                        </p>
+                                    )}
+                                    {sentAt !== null && (
+                                        <p className='text-xs text-green-800 bg-green-50 border border-green-200 rounded-lg px-2 py-1'>
+                                            This edition has already been sent{sentAt ? <> on <b>{format(sentAt, 'EEE dd MMM, hh:mm a')}</b></> : null}.
                                         </p>
                                     )}
                                 </div>
